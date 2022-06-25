@@ -8,7 +8,11 @@
       flat
       style="width: 130px"
     >
+        
       <div>
+        <div v-if="currentLeader" style="position: absolute">
+          <span v-if="currentLeader.id == player.id">Patrão</span>
+        </div>
         <div
           class="q-pa-sm row items-center"
           :class="player ? 'justify-center' : 'justify-start'"
@@ -30,7 +34,7 @@
         <div :class="`${backgroundColor} text-bold`">
           <q-card-section class="q-pa-xs" :class="textColor">
             <div class="row justify-between" v-if="player">
-              <span class="text-caption"> {{ player.name }} </span>
+              <span class="text-caption"> {{ player.userName }} </span>
               <span class="text-caption text-grey-8">
                 Pontos: {{ player.pts }}
               </span>
@@ -48,7 +52,14 @@
 <script>
 export default {
   name: "Card",
-  props: ["backgroundColor", "textColor", "text", "player", "canHover"],
+  props: [
+    "backgroundColor",
+    "textColor",
+    "text",
+    "player",
+    "canHover",
+    "currentLeader",
+  ],
 
   data() {
     return {};
@@ -61,5 +72,6 @@ export default {
   transform: scale(1.2);
   cursor: pointer;
   z-index: 1;
+  transition: transform 0.8s;
 }
 </style>

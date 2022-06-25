@@ -12,6 +12,7 @@
               textColor="text-black"
               :text="''"
               :player="player"
+              :currentLeader="currentLeader"
             />
           </div>
         </div>
@@ -20,22 +21,37 @@
         <div class="col">
           <div class="row q-pa-md q-mt-xs">
             <div class="row col">
-              <card
-                backgroundColor="bg-black"
-                textColor="text-white"
-                :canHover="true"
-              />
-              <card
-                backgroundColor="bg-black"
-                textColor="text-white"
-                text="Durante o sexo, gosto de pensar em ________."
-              />
+              <div @click="nextBlackCard()" v-show="blackCards.length > 1">
+                <card
+                  backgroundColor="bg-black"
+                  textColor="text-white"
+                  :canHover="
+                    currentLeader == player && !blockNewBlackCard ? true : false
+                  "
+                  :text="`Restantes ${blackCards.length - 1}`"
+                />
+              </div>
+              <div v-if="blackCardSelected && !isPendingLeaderStart">
+                <card
+                  backgroundColor="bg-black"
+                  textColor="text-white"
+                  :text="blackCardSelected.text"
+                />
+              </div>
             </div>
             <div class="row col justify-center">
               <card />
             </div>
             <div class="row col justify-end">
-              <card />
+              <div
+                @click="buyCard(cardsToBuy[0])"
+                v-show="cardsToBuy.length >= 1"
+              >
+                <card
+                  :canHover="true"
+                  :text="`Restantes ${cardsToBuy.length}`"
+                />
+              </div>
               <card />
             </div>
           </div>
@@ -61,7 +77,7 @@
               textColor="text-black"
               :text="''"
               :player="player"
-              :canHover="false"
+              :currentLeader="currentLeader"
             />
           </div>
         </div>
@@ -78,15 +94,22 @@
           size="sm"
           glossy
         />
-        <div class="row" v-for="(card, index) in content" v-bind:key="index">
+        <div
+          class="row"
+          v-for="(card, index) in cardsInHands"
+          v-bind:key="index"
+        >
           <div class="column justify-center items-center">
             <div @click="selectCard(card)">
               <card
                 backgroundColor="bg-white"
                 textColor="text-black"
                 :text="card.text"
-                :style="blockCardHands ? 'opacity: 0.7' : ''"
-                :disabled="blockCardHands"
+                :style="
+                  blockCardHands || currentLeader.id == player.id
+                    ? 'opacity: 0.7'
+                    : ''
+                "
                 :canHover="true"
               />
             </div>
@@ -126,7 +149,11 @@
 </template>
 
 <script>
+import axios from "axios";
 import Card from "components/Card";
+import { Cookies } from "quasar";
+import { SocketReceived } from "boot/socket-received";
+
 export default {
   name: "Home",
   components: {
@@ -134,10 +161,73 @@ export default {
   },
   data() {
     return {
-      showTotalCards: 5,
+      showTotalCardsInHands: 5,
+      blackCardSelectedPosition: 0,
       currentPage: 1,
 
-      content: "",
+      blackCards: [
+        {
+          id: 14,
+          text: "Durante o sexo, gosto de pensar em _______",
+        },
+        {
+          id: 250,
+          text: "Em seus momentos finais Michael Jackson pensou em _______",
+        },
+        {
+          id: 187,
+          text: "Idosos tem cheiro de que?",
+        },
+        {
+          id: 149,
+          text: "Guerra! Para que serve?",
+        },
+        {
+          id: 149,
+          text: "O que me causa gases incontroláveis?",
+        },
+        {
+          id: 149,
+          text: "Bebo para esquecer____",
+        },
+        {
+          id: 149,
+          text: "Buscando aumentar sua audiência, o museu de História Natural abriu uma exposição interativa sobre ____",
+        },
+      ],
+
+      blackCardSelected: null,
+
+      cardsToBuy: [
+        {
+          id: 11,
+          text: "Flanelinhas",
+        },
+        {
+          id: 12,
+          text: "Células tronco",
+        },
+        {
+          id: 13,
+          text: "Tom Cruise",
+        },
+        {
+          id: 14,
+          text: "Lobotomia",
+        },
+        {
+          id: 15,
+          text: "Sexo entre pandas",
+        },
+        {
+          id: 16,
+          text: "Lamber coisas para estabelecer que são propriedade sua",
+        },
+        {
+          id: 17,
+          text: "Amizade Colorida",
+        },
+      ],
 
       cards: [
         {
@@ -176,40 +266,25 @@ export default {
           id: 9,
           text: "Servidão",
         },
+        {
+          id: 10,
+          text: "Ejaculação precoce",
+        },
       ],
 
       players: [
         {
-          name: "Vitória",
-          selectedCardText: "Rinha de Galo",
-          pts: 1,
+          id: "teste",
+          userName: "teste",
         },
         {
-          name: "Pietra",
-          selectedCardText: "Crianças",
-          pts: 4,
-        },
-        {
-          name: "Luna",
-          selectedCardText: "Estupro",
-          pts: 8,
-        },
-        {
-          name: "Débora",
-          selectedCardText: "Pedofilia",
-          pts: 2,
-        },
-        {
-          name: "Ryan",
-          selectedCardText: "Membrana",
-          pts: 5,
-        },
-        {
-          name: "Elias",
-          selectedCardText: "Billie Jean",
-          pts: 0,
+          id: "teste2",
+          userName: "teste",
         },
       ],
+      totalPlayers: 0,
+
+      cardsInHands: "",
 
       disableForward: false,
       disablePrevious: true,
@@ -217,75 +292,140 @@ export default {
       selectedCardInHandsId: null,
       isSelectingCardInHands: false,
       blockCardHands: false,
+      blockNewBlackCard: false,
+      isPendingLeaderStart: true,
 
       cardsInTable: [],
+
+      currentLeader: null,
+      player: null,
+
+      cartasContraHumanidadeConnection: false,
     };
+  },
+
+  channels: {
+    CartasContraHumanidadeChannel: {
+      connected(data) {
+        console.log("connected");
+      },
+
+      received(data) {
+        console.log("received");
+      },
+    },
   },
 
   mounted() {
     this.defaultCards();
     this.checkHandCards();
+
+    this.currentLeader = this.players[1];
+    this.player = this.players[0];
+
+    this.isPendingLeaderStart = false;
   },
 
   methods: {
     defaultCards() {
-      this.content = this.cards.slice(0, this.showTotalCards);
+      this.cardsInHands = this.cards.slice(0, this.showTotalCardsInHands);
+    },
+
+    resetRound() {
+      this.blockCardHands = false;
+      this.selectedCardInHandsId = null;
+      this.cardsInTable = [];
+    },
+
+    nextBlackCard() {
+      if (
+        this.blackCards.length > 1 &&
+        this.player.id == this.currentLeader.id &&
+        !this.blockNewBlackCard
+      ) {
+        this.blackCards.shift();
+        this.blackCardSelected = this.blackCards[0];
+        this.blockNewBlackCard = true;
+        this.resetRound();
+      }
     },
 
     nextCards() {
-      this.content = this.cards.slice(
-        this.showTotalCards * this.currentPage - 1,
-        this.showTotalCards * this.currentPage + this.showTotalCards
-      );
-      this.currentPage++;
-      this.checkHandCards();
+      if (this.player.id != this.currentLeader.id) {
+        this.cardsInHands = this.cards.slice(
+          this.showTotalCardsInHands * this.currentPage,
+          this.showTotalCardsInHands * this.currentPage +
+            this.showTotalCardsInHands
+        );
+        this.currentPage++;
+        this.checkHandCards();
+      }
     },
 
     previousCards() {
       this.currentPage--;
-      this.content = this.cards.slice(
-        this.showTotalCards * this.currentPage - this.showTotalCards,
-        this.showTotalCards * this.currentPage
+      this.cardsInHands = this.cards.slice(
+        this.showTotalCardsInHands * this.currentPage -
+          this.showTotalCardsInHands,
+        this.showTotalCardsInHands * this.currentPage
       );
       this.checkHandCards();
     },
 
     checkHandCards() {
-      if (this.showTotalCards * this.currentPage >= this.cards.length) {
+      if (this.currentPage == 2) {
         this.disableForward = true;
         this.disablePrevious = false;
-      } else if (this.showTotalCards * this.currentPage <= this.cards.length) {
+      } else {
         this.disableForward = false;
         this.disablePrevious = true;
       }
     },
 
-    selectCard(card) {
-      if (!this.isSelectingCardInHands && !this.aa) {
-        this.selectedCardInHandsId = card.id;
-        this.isSelectingCardInHands = true;
+    buyCard(card) {
+      if (this.cards.length <= 9) {
+        this.cards.push(card);
+        this.cardsToBuy.shift();
+        this.cardsInHands = this.cards.slice(5, 10);
+        this.currentPage = 2;
+        this.checkHandCards();
       }
+    },
+
+    selectCard(card) {
+      if (this.currentLeader.id == this.player.id) {
+        return;
+      }
+      this.selectedCardInHandsId = card.id;
     },
 
     playCard(card) {
       this.selectedCardInHandsId = null;
-      this.isSelectingCardInHands = false;
 
       if (this.blockCardHands) {
         return;
       }
 
-      this.content = this.listRemoveByIndex(this.cards, card);
-      this.defaultCards();
+      this.cardsInHands = this.listRemoveByIndex(this.cards, card);
 
       this.cardsInTable.push(card);
+
+      this.updateCardsInHand();
+      this.checkHandCards();
 
       this.blockCardHands = true;
     },
 
     cancelCard() {
       this.selectedCardInHandsId = null;
-      this.isSelectingCardInHands = false;
+    },
+
+    updateCardsInHand() {
+      if (this.currentPage == 1) {
+        this.cardsInHands = this.cards.slice(0, 5);
+      } else {
+        this.cardsInHands = this.cards.slice(5, 10);
+      }
     },
 
     listRemoveByIndex(array, item) {
