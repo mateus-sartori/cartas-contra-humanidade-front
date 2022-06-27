@@ -149,10 +149,8 @@
 </template>
 
 <script>
-import axios from "axios";
 import Card from "components/Card";
 import { Cookies } from "quasar";
-import { SocketReceived } from "boot/socket-received";
 
 export default {
   name: "Home",
@@ -272,18 +270,6 @@ export default {
         },
       ],
 
-      players: [
-        {
-          id: "teste",
-          userName: "teste",
-        },
-        {
-          id: "teste2",
-          userName: "teste",
-        },
-      ],
-      totalPlayers: 0,
-
       cardsInHands: "",
 
       disableForward: false,
@@ -298,6 +284,8 @@ export default {
       cardsInTable: [],
 
       currentLeader: null,
+
+      players: [],
       player: null,
 
       cartasContraHumanidadeConnection: false,
@@ -306,11 +294,11 @@ export default {
 
   channels: {
     CartasContraHumanidadeChannel: {
-      connected(data) {
+      connected() {
         console.log("connected");
       },
 
-      received(data) {
+      received() {
         console.log("received");
       },
     },
@@ -320,8 +308,10 @@ export default {
     this.defaultCards();
     this.checkHandCards();
 
-    this.currentLeader = this.players[1];
-    this.player = this.players[0];
+    this.$cable.subscribe({
+      channel: "CartasContraHumanidadeChannel",
+      room: Cookies.get('session')
+    });
 
     this.isPendingLeaderStart = false;
   },

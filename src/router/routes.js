@@ -33,7 +33,7 @@ const routes = [
 
   {
     path: "/login",
-    beforeEnter: guardNotRoute,
+    // beforeEnter: guardNotRoute,
     component: () => import("pages/Login.vue"),
   },
 

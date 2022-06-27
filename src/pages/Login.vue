@@ -14,7 +14,7 @@
             </div>
             <div v-if="getInAlreadySession">
               <span class="text-subtitle2 text-bold"> Sessão Id </span>
-              <q-input square filled v-model="form.session" dense />
+              <q-input square filled v-model="form.room" dense />
             </div>
           </div>
           <div class="row items-center">
@@ -30,13 +30,23 @@
               size="md"
               type="submit"
             />
+
+            <q-btn
+              dense
+              label="Get users"
+              no-caps
+              size="md"
+              @click="addNewPlayer()"
+            />
           </div>
         </q-form>
       </q-card>
     </div>
+    {{ newPlayers }}
   </div>
 </template>
 <script>
+import axios from "axios";
 import { Cookies } from "quasar";
 export default {
   data() {
@@ -44,35 +54,73 @@ export default {
       getInAlreadySession: false,
 
       form: {
-        name: "",
+        name: null,
         session: null,
       },
+
+      currentPlayers: [],
+      newPlayers: [],
     };
   },
 
+  channels: {
+    CartasContraHumanidadeChannel: {
+      connected() {
+        console.log("connected");
+      },
+      rejected() {},
+      received(data) {
+        console.log('received')
+        this.newPlayers = data;
+      },
+      disconnected() {},
+    },
+  },
+
+  mounted() {
+    this.$cable.subscribe({
+      channel: "CartasContraHumanidadeChannel",
+    });
+  },
 
   methods: {
     handleRoom() {
-      if (!this.form.session) {
+      Cookies.set("name", this.form.name);
+      Cookies.set("id", Math.random().toString(36).slice(-8));
+
+      if (this.getInAlreadySession) {
+        Cookies.set("session", this.form.session);
+      } else {
         Cookies.set("session", Math.random().toString(36).slice(-30));
-        Cookies.set('host', true)
       }
-
-      Cookies.set("userId", Math.random().toString(36).slice(-8));
-      Cookies.set("userName", this.form.name);
-
-      if (this.getInAlreadySession) Cookies.set("session", this.form.session);
 
       let session = Cookies.get("session");
+      let id = Cookies.get("id");
+      let name = Cookies.get("name");
 
-      if (session) {
-        this.$cable.subscribe({
-          channel: "CartasContraHumanidadeChannel",
-          room: session,
+      this.addNewPlayer(session, id, name);
+    },
+
+    addNewPlayer(session, id, name) {
+      let newPlayer = {
+        session: session,
+        id: id,
+        name: name,
+      };
+
+      axios.get("players").then((response) => {
+        this.currentPlayers = response.data;
+
+        this.currentPlayers.push(newPlayer);
+
+        let data = {
+          currentPlayers: this.currentPlayers,
+        };
+
+        axios.post("players", data).then((response) => {
+          this.newPlayers = response.data;
         });
-
-        this.$router.push("/");
-      }
+      });
     },
   },
 };
