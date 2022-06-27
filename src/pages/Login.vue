@@ -14,7 +14,7 @@
             </div>
             <div v-if="getInAlreadySession">
               <span class="text-subtitle2 text-bold"> Sessão Id </span>
-              <q-input square filled v-model="form.room" dense />
+              <q-input square filled v-model="form.session" dense />
             </div>
           </div>
           <div class="row items-center">
@@ -70,7 +70,6 @@ export default {
       },
       rejected() {},
       received(data) {
-        console.log('received')
         this.newPlayers = data;
       },
       disconnected() {},
