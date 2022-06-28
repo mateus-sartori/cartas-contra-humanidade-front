@@ -8,9 +8,9 @@
       flat
       style="width: 130px"
     >
-        
       <div>
         <div v-if="currentLeader" style="position: absolute">
+          {{ currentPlayer ? "Você" : "" }}
           <span v-if="currentLeader.id == player.id">Patrão</span>
         </div>
         <div
@@ -34,8 +34,9 @@
         <div :class="`${backgroundColor} text-bold`">
           <q-card-section class="q-pa-xs" :class="textColor">
             <div class="row justify-between" v-if="player">
-              <span class="text-caption"> {{ player.userName }} </span>
+              <span class="text-caption"> {{ player.name }} </span>
               <span class="text-caption text-grey-8">
+                
                 Pontos: {{ player.pts }}
               </span>
             </div>
@@ -50,6 +51,7 @@
 </template>
 
 <script>
+import { Cookies } from "quasar";
 export default {
   name: "Card",
   props: [
@@ -64,6 +66,12 @@ export default {
   data() {
     return {};
   },
+
+  computed: {
+    currentPlayer() {
+      return this.player.id === Cookies.get('id')
+    }
+  }
 };
 </script>
 

@@ -28,12 +28,12 @@ const routes = [
     path: "/",
     beforeEnter: guardRoute,
     component: () => import("layouts/MainLayout.vue"),
-    children: [{ path: "", component: () => import("pages/Home.vue") }],
+    children: [{ path: "", component: () => import("pages/HomePage.vue") }],
   },
 
   {
     path: "/login",
-    // beforeEnter: guardNotRoute,
+    beforeEnter: guardNotRoute,
     component: () => import("pages/Login.vue"),
   },
 

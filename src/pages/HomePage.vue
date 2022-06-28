@@ -4,7 +4,7 @@
       <div class="row q-py-md">
         <div class="column">
           <div
-            v-for="(player, index) in players.slice(0, 3)"
+            v-for="(player, index) in playersInSession.slice(0, 3)"
             v-bind:key="index"
           >
             <card
@@ -69,7 +69,7 @@
         </div>
         <div class="column">
           <div
-            v-for="(player, index) in players.slice(3, 6)"
+            v-for="(player, index) in playersInSession.slice(3, 6)"
             v-bind:key="index"
           >
             <card
@@ -151,9 +151,10 @@
 <script>
 import Card from "components/Card";
 import { Cookies } from "quasar";
+import { Game } from "../game/game";
 
 export default {
-  name: "Home",
+  name: "HomePage",
   components: {
     Card,
   },
@@ -288,30 +289,47 @@ export default {
       players: [],
       player: null,
 
+      playersInSession: [],
+
       cartasContraHumanidadeConnection: false,
     };
   },
 
   channels: {
     CartasContraHumanidadeChannel: {
-      connected() {
-        console.log("connected");
-      },
+      received(data) {
+        this.players = data;
 
-      received() {
-        console.log("received");
+        if (this.players.length >= 1) {
+          for (let i = 0; i < this.players.length; i++) {
+            const playersInSession = this.players.filter((element) => {
+              return this.players[i].session === Cookies.get("session");
+            });
+
+            this.playersInSession = playersInSession;
+
+            
+
+    
+            const player = this.playersInSession.find((player) => {
+              return player.id == Cookies.get("id");
+            });
+
+            this.player = player;
+            this.currentLeader = this.players[0];
+          }
+        }
       },
     },
   },
 
-  mounted() {
+  created() {
     this.defaultCards();
     this.checkHandCards();
 
-    this.$cable.subscribe({
-      channel: "CartasContraHumanidadeChannel",
-      room: Cookies.get('session')
-    });
+    const game = new Game();
+
+    game.getAllPlayers();
 
     this.isPendingLeaderStart = false;
   },

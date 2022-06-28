@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
+    "actioncable": "^5.2.8",
     "actioncable-vue": "^2.5.1",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",

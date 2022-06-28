@@ -30,24 +30,16 @@
               size="md"
               type="submit"
             />
-
-            <q-btn
-              dense
-              label="Get users"
-              no-caps
-              size="md"
-              @click="addNewPlayer()"
-            />
           </div>
         </q-form>
       </q-card>
     </div>
-    {{ newPlayers }}
   </div>
 </template>
 <script>
-import axios from "axios";
 import { Cookies } from "quasar";
+import { Game } from "../game/game";
+
 export default {
   data() {
     return {
@@ -57,9 +49,6 @@ export default {
         name: null,
         session: null,
       },
-
-      currentPlayers: [],
-      newPlayers: [],
     };
   },
 
@@ -68,11 +57,6 @@ export default {
       connected() {
         console.log("connected");
       },
-      rejected() {},
-      received(data) {
-        this.newPlayers = data;
-      },
-      disconnected() {},
     },
   },
 
@@ -84,41 +68,30 @@ export default {
 
   methods: {
     handleRoom() {
-      Cookies.set("name", this.form.name);
+      const game = new Game();
+
       Cookies.set("id", Math.random().toString(36).slice(-8));
 
       if (this.getInAlreadySession) {
-        Cookies.set("session", this.form.session);
+        Cookies.set('session', this.form.session)
+        game.setSession(this.form.session);
       } else {
         Cookies.set("session", Math.random().toString(36).slice(-30));
+        let session = Cookies.get("session");
+        game.setSession(session);
       }
 
-      let session = Cookies.get("session");
       let id = Cookies.get("id");
-      let name = Cookies.get("name");
 
-      this.addNewPlayer(session, id, name);
-    },
-
-    addNewPlayer(session, id, name) {
-      let newPlayer = {
-        session: session,
+      const newPlayer = {
+        name: this.form.name,
         id: id,
-        name: name,
+        session: game.getSession(),
       };
 
-      axios.get("players").then((response) => {
-        this.currentPlayers = response.data;
-
-        this.currentPlayers.push(newPlayer);
-
-        let data = {
-          currentPlayers: this.currentPlayers,
-        };
-
-        axios.post("players", data).then((response) => {
-          this.newPlayers = response.data;
-        });
+      game.getAllPlayers().then(() => {
+        game.addPlayer(newPlayer);
+        this.$router.push("/");
       });
     },
   },
