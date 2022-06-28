@@ -67,6 +67,7 @@
             </div>
           </div>
         </div>
+        
         <div class="column">
           <div
             v-for="(player, index) in playersInSession.slice(3, 6)"
