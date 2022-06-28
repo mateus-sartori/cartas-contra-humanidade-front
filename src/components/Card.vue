@@ -25,9 +25,9 @@
             </div>
           </div>
           <div class="row" v-if="player">
-            <q-avatar size="80px">
-              <img src="https://cdn.quasar.dev/img/avatar.png" />
-            </q-avatar>
+            <q-avatar :color="randomColor()" text-color="white">{{
+              player.name[0].toUpperCase()
+            }}</q-avatar>
           </div>
         </div>
         <q-separator />
@@ -36,7 +36,6 @@
             <div class="row justify-between" v-if="player">
               <span class="text-caption"> {{ player.name }} </span>
               <span class="text-caption text-grey-8">
-                
                 Pontos: {{ player.pts }}
               </span>
             </div>
@@ -69,9 +68,35 @@ export default {
 
   computed: {
     currentPlayer() {
-      return this.player.id === Cookies.get('id')
-    }
-  }
+      return this.player.id === Cookies.get("id");
+    },
+  },
+
+  methods: {
+    randomColor() {
+      var colors = [
+        "red",
+        "blue",
+        "yellow",
+        "green",
+        "purple",
+        "orange",
+        "grey",
+        "pink",
+        "teal",
+        "lime",
+        "brown",
+        "blue-grey",
+      ];
+
+      var color = colors[Math.floor(Math.random() * colors.length)];
+      var randNum = Math.floor(Math.random() * 14) + 1;
+
+      console.log(`#${color}-${randNum}`);
+
+      return `${color}-${randNum}`;
+    },
+  },
 };
 </script>
 

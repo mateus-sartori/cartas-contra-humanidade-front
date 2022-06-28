@@ -1,21 +1,56 @@
 <template>
   <div>
-    <div v-if="room">Está é a sala {{ room.id }}</div>
-    <div v-if="playersInRoom">{{ playersInRoom }}</div>
+    <div class="container">
+      <div class="flex flex-center">
+        <span class="text-bold text-subtitle2" v-if="room">
+          Sessão: {{ room.id }}
+        </span>
+      </div>
+      <div class="row q-py-md">
+        <div class="column" v-if="players">
+          <div
+            v-for="(player, index) in players.slice(0, 3)"
+            v-bind:key="index"
+          >
+            <card
+              backgroundColor="bg-white"
+              textColor="text-black"
+              :player="player"
+            />
+          </div>
+        </div>
+        <div class="column" v-if="players">
+          <div
+            v-for="(player, index) in players.slice(3, 6)"
+            v-bind:key="index"
+          >
+            <card
+              backgroundColor="bg-white"
+              textColor="text-black"
+              :player="player"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import Card from "components/Card";
 import { Cookies } from "quasar";
 
 export default {
   name: "RoomGame",
+
+  components: {
+    Card,
+  },
   data() {
     return {
       channel: "CartasContraHumanidadeChannel",
       rooms: [],
-      players: [],
-      playersInRoom: [],
+      players: null,
     };
   },
 
@@ -27,13 +62,9 @@ export default {
 
       received(data) {
         switch (data.action) {
-          case "list_players":
-            this.filterPlayersInRoom();
-            this.players = data.players;
-            this.filterPlayersInRoom();
-            break;
           case "list_rooms":
             this.rooms = data.rooms;
+            this.loadPlayersInRoom();
             break;
           default:
             break;
@@ -60,6 +91,10 @@ export default {
   },
 
   methods: {
+    loadPlayersInRoom() {
+      this.players = this.room["players"];
+    },
+
     loadPlayers() {
       this.$cable.perform({
         channel: this.channel,
@@ -71,12 +106,6 @@ export default {
       this.$cable.perform({
         channel: this.channel,
         action: "list_rooms",
-      });
-    },
-
-    filterPlayersInRoom() {
-      this.playersInRoom = this.players.filter((players) => {
-        return players.room_id === Cookies.get("room");
       });
     },
   },

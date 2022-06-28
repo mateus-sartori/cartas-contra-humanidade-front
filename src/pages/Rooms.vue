@@ -6,7 +6,7 @@
           <q-btn
             label="Criar sala"
             no-caps
-            color="green-6"
+            color="green-7"
             @click="createRoom()"
           />
         </div>
@@ -21,8 +21,11 @@
           v-for="(room, index) in rooms"
           v-bind:key="index"
         >
-          <div>Sala de: {{currentPlayer.name}}</div>
-          <div>Total de Jogadores: 10/10</div>
+          <div v-if="currentPlayer">Sala de: {{ room.host }}</div>
+          <div>Total de Jogadores: {{room.players.length}}/6</div>
+          <div>
+            <q-btn label="Entrar na sala" no-caps @click="putPlayerInRoom(room)" color="green-7" />
+          </div>
         </q-card>
       </div>
       <div class="col-12" v-else>Não há salas disponiveis</div>
@@ -51,13 +54,11 @@ export default {
       },
 
       received(data) {
-        console.log("action", data.action);
         switch (data.action) {
           case "list_players":
             this.players = data.players;
             break;
           case "list_rooms":
-            console.log("list rooms?");
             this.rooms = data.rooms;
             break;
           default:
@@ -89,34 +90,38 @@ export default {
       Cookies.set("room", Math.random().toString(36).slice(-10));
       let roomId = Cookies.get("room");
 
-      var room = {
+      var roomInfo = {
+        host: this.currentPlayer.name,
         id: roomId,
       };
 
       this.$cable.perform({
         channel: this.channel,
         action: "create_room",
-        data: {
-          room: room
-        },
+        data: roomInfo,
       });
 
       this.loadRooms();
 
-      this.putPlayerInRoom(room);
+      this.putPlayerInRoom(roomInfo);
 
-      this.$router.push("/room/" + room.id);
+      this.$router.push("/room/" + roomInfo.id);
     },
 
     putPlayerInRoom(room) {
+      Cookies.set('room', room.id)
+
       this.$cable.perform({
         channel: this.channel,
         action: "put_player_in_room",
         data: {
-          player_id: this.currentPlayer.id,
-          room_id: room,
+          player: this.currentPlayer,
+          room_id: room.id,
+          players: room["players"],
         },
       });
+
+      this.$router.push("/room/" + room.id);
     },
 
     loadPlayers() {
