@@ -154,7 +154,7 @@ import { Cookies } from "quasar";
 import { Game } from "../game/game";
 
 export default {
-  name: "HomePage",
+  name: "RoomGame",
   components: {
     Card,
   },

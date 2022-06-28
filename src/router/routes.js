@@ -2,33 +2,36 @@ import { Cookies } from "quasar";
 
 function guardRoute(to, from, next) {
   var isAuthenticated = false;
-  if (Cookies.get('session')) {
-    isAuthenticated = true
+  if (Cookies.get("session")) {
+    isAuthenticated = true;
   } else {
-    isAuthenticated = false
+    isAuthenticated = false;
   }
 
-  if(isAuthenticated) {
-    next() 
+  if (isAuthenticated) {
+    next();
   } else {
-    next('/login')
+    next("/login");
   }
 }
 
 function guardNotRoute(to, from, next) {
-  if (!Cookies.get('session')) {
-    next() 
+  if (!Cookies.get("session")) {
+    next();
   } else {
-    next("/")
+    next("/");
   }
 }
 
 const routes = [
   {
     path: "/",
-    beforeEnter: guardRoute,
+    // beforeEnter: guardRoute,
     component: () => import("layouts/MainLayout.vue"),
-    children: [{ path: "", component: () => import("pages/HomePage.vue") }],
+    children: [
+      { path: "/rooms", component: () => import("pages/Rooms.vue") },
+      { path: "/room/:id", component: () => import("pages/RoomGame.vue") },
+    ],
   },
 
   {
