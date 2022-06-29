@@ -9,9 +9,8 @@
       style="width: 130px"
     >
       <div>
-        <div v-if="currentLeader" style="position: absolute">
-          {{ currentPlayer ? "Você" : "" }}
-          <span v-if="currentLeader.id == player.id">Patrão</span>
+        <div v-if="ownPlayer" class="row justify-center">
+          {{ ownPlayer ? "Você" : "" }}
         </div>
         <div
           class="q-pa-sm row items-center"
@@ -25,7 +24,7 @@
             </div>
           </div>
           <div class="row" v-if="player">
-            <q-avatar :color="randomColor()" text-color="white">{{
+            <q-avatar color="blue-8" text-color="white">{{
               player.name[0].toUpperCase()
             }}</q-avatar>
           </div>
@@ -59,7 +58,7 @@ export default {
     "text",
     "player",
     "canHover",
-    "currentLeader",
+    "currentPlayer",
   ],
 
   data() {
@@ -67,36 +66,10 @@ export default {
   },
 
   computed: {
-    currentPlayer() {
-      return this.player.id === Cookies.get("id");
-    },
-  },
-
-  methods: {
-    randomColor() {
-      var colors = [
-        "red",
-        "blue",
-        "yellow",
-        "green",
-        "purple",
-        "orange",
-        "grey",
-        "pink",
-        "teal",
-        "lime",
-        "brown",
-        "blue-grey",
-      ];
-
-      var color = colors[Math.floor(Math.random() * colors.length)];
-      var randNum = Math.floor(Math.random() * 14) + 1;
-
-      console.log(`#${color}-${randNum}`);
-
-      return `${color}-${randNum}`;
-    },
-  },
+    ownPlayer() {
+      return this.player === this.currentPlayer
+    }
+  }
 };
 </script>
 

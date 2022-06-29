@@ -16,6 +16,7 @@
               backgroundColor="bg-white"
               textColor="text-black"
               :player="player"
+              :currentPlayer="currentPlayer"
             />
           </div>
         </div>
@@ -28,6 +29,7 @@
               backgroundColor="bg-white"
               textColor="text-black"
               :player="player"
+              :currentPlayer="currentPlayer"
             />
           </div>
         </div>
@@ -50,6 +52,7 @@ export default {
     return {
       channel: "CartasContraHumanidadeChannel",
       rooms: [],
+      currentPlayer: null,
       players: null,
     };
   },
@@ -81,6 +84,38 @@ export default {
     },
   },
 
+  watch: {
+    players() {
+      this.currentPlayer = this.players.find((player) => {
+        return player.id === Cookies.get("id");
+      });
+
+      if (this.currentPlayer) return;
+      else {
+        this.$q.notify({
+          icon: "announcement",
+          message: "Jogador não encontrado, entre com uma sessão antes.",
+          color: "brown",
+          classes: "glossy",
+        });
+
+        Cookies.remove("id");
+        Cookies.remove("room");
+
+        setTimeout(() => {
+          this.$router.push("/login");
+        }, 300);
+      }
+    },
+  },
+
+  destroyed() {
+    this.removePlayerFromRoom();
+    if (this.players.length <= 1) {
+      this.deleteRoom();
+    }
+  },
+
   mounted() {
     this.$cable.subscribe({
       channel: this.channel,
@@ -92,7 +127,9 @@ export default {
 
   methods: {
     loadPlayersInRoom() {
-      this.players = this.room["players"];
+      if (this.room) {
+        this.players = this.room["players"];
+      }
     },
 
     loadPlayers() {
@@ -106,6 +143,27 @@ export default {
       this.$cable.perform({
         channel: this.channel,
         action: "list_rooms",
+      });
+    },
+
+    removePlayerFromRoom() {
+      this.$cable.perform({
+        channel: this.channel,
+        action: "remove_player_from_room",
+        data: {
+          player: this.currentPlayer,
+          room_id: this.room["id"],
+        },
+      });
+    },
+
+    deleteRoom() {
+      this.$cable.perform({
+        channel: this.channel,
+        action: "delete_room",
+        data: {
+          room_id: this.room["id"],
+        },
       });
     },
   },

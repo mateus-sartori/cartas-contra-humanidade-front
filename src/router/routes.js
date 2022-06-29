@@ -2,7 +2,7 @@ import { Cookies } from "quasar";
 
 function guardRoute(to, from, next) {
   var isAuthenticated = false;
-  if (Cookies.get("session")) {
+  if (Cookies.get("id")) {
     isAuthenticated = true;
   } else {
     isAuthenticated = false;
@@ -16,7 +16,7 @@ function guardRoute(to, from, next) {
 }
 
 function guardNotRoute(to, from, next) {
-  if (!Cookies.get("session")) {
+  if (!Cookies.get("id")) {
     next();
   } else {
     next("/");
@@ -26,7 +26,7 @@ function guardNotRoute(to, from, next) {
 const routes = [
   {
     path: "/",
-    // beforeEnter: guardRoute,
+    beforeEnter: guardRoute,
     component: () => import("layouts/MainLayout.vue"),
     children: [
       { path: "/rooms", component: () => import("pages/Rooms.vue") },
