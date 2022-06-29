@@ -117,10 +117,6 @@ export default {
   },
 
   mounted() {
-    this.$cable.subscribe({
-      channel: this.channel,
-    });
-
     this.loadRooms();
     this.loadPlayers();
   },

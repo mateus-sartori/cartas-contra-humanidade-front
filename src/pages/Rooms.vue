@@ -95,18 +95,16 @@ export default {
 
         Cookies.remove("id");
         Cookies.remove("room");
+        this.removePlayer();
 
         setTimeout(() => {
           this.$router.push("/login");
-        }, 300);
+        }, 150);
       }
     },
   },
 
   mounted() {
-    this.$cable.subscribe({
-      channel: this.channel,
-    });
     this.$q.loading.show({
       message: "Carregando salas",
     });
@@ -172,6 +170,20 @@ export default {
       this.$cable.perform({
         channel: this.channel,
         action: "list_rooms",
+      });
+    },
+
+    removePlayer() {
+      axios.get("https://api.my-ip.io/ip.json").then((response) => {
+        const ip = response.data.ip;
+
+        this.$cable.perform({
+          channel: this.channel,
+          action: "remove_player_from_session",
+          data: {
+            ip: ip,
+          },
+        });
       });
     },
   },
