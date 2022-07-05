@@ -1,14 +1,7 @@
-import { Cookies } from "quasar";
+import store from "../store";
 
 function isAuthenticated(to, from, next) {
-  var isAuthenticated = false;
-  if (Cookies.get("id")) {
-    isAuthenticated = true;
-  } else {
-    isAuthenticated = false;
-  }
-
-  if (isAuthenticated) {
+  if (store.getters.session) {
     next();
   } else {
     next("/login");
@@ -16,7 +9,7 @@ function isAuthenticated(to, from, next) {
 }
 
 function isNotAuthenticated(to, from, next) {
-  if (!Cookies.get("id")) {
+  if (!store.getters.session) {
     next();
   } else {
     next("/");

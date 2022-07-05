@@ -2,8 +2,8 @@
   <div>
     <div class="container">
       <div class="flex flex-center">
-        <span class="text-bold text-subtitle2" v-if="room">
-          Sessão: {{ room.id }}
+        <span class="text-bold text-subtitle2" v-if="session_room">
+          Sessão: {{ session_room.id }}
         </span>
       </div>
       <div class="row q-py-md">
@@ -40,7 +40,8 @@
 
 <script>
 import Card from "components/Card";
-import { Cookies } from "quasar";
+
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "RoomGame",
@@ -59,10 +60,6 @@ export default {
 
   channels: {
     CartasContraHumanidadeChannel: {
-      connected() {
-        this.loadRooms();
-      },
-
       received(data) {
         switch (data.action) {
           case "list_rooms":
@@ -72,14 +69,16 @@ export default {
           default:
             break;
         }
-      },
+      }
     },
   },
 
   computed: {
-    room() {
+    ...mapGetters(["session", "room"]),
+
+    session_room() {
       return this.rooms.find((room) => {
-        return room.id == Cookies.get("room");
+        return room.id == this.room;
       });
     },
   },
@@ -87,7 +86,7 @@ export default {
   watch: {
     players() {
       this.currentPlayer = this.players.find((player) => {
-        return player.id === Cookies.get("id");
+        return player.id === this.session;
       });
 
       if (this.currentPlayer) return;
@@ -99,9 +98,6 @@ export default {
           classes: "glossy",
         });
 
-        Cookies.remove("id");
-        Cookies.remove("room");
-
         setTimeout(() => {
           this.$router.push("/login");
         }, 300);
@@ -111,20 +107,30 @@ export default {
 
   destroyed() {
     this.removePlayerFromRoom();
+    this.setRoom(null)
     if (this.players.length <= 1) {
       this.deleteRoom();
     }
   },
 
   mounted() {
-    this.loadRooms();
-    this.loadPlayers();
+    this.$q.loading.show({
+      message: "Entrando na sessão...",
+    });
+
+    setTimeout(() => {
+      this.loadRooms();
+      this.loadPlayers();
+      this.$q.loading.hide();
+    }, 500);
   },
 
   methods: {
+    ...mapActions(['setRoom']),
+
     loadPlayersInRoom() {
-      if (this.room) {
-        this.players = this.room["players"];
+      if (this.session_room) {
+        this.players = this.session_room["players"];
       }
     },
 
@@ -148,7 +154,7 @@ export default {
         action: "remove_player_from_room",
         data: {
           player: this.currentPlayer,
-          room_id: this.room["id"],
+          room_id: this.session_room["id"],
         },
       });
     },
@@ -158,7 +164,7 @@ export default {
         channel: this.channel,
         action: "delete_room",
         data: {
-          room_id: this.room["id"],
+          room_id: this.session_room["id"],
         },
       });
     },

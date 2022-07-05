@@ -28,8 +28,7 @@
   </div>
 </template>
 <script>
-import axios from "axios";
-import { Cookies } from "quasar";
+import { mapGetters } from "vuex";
 
 export default {
   data() {
@@ -45,55 +44,33 @@ export default {
     };
   },
 
-  mounted() {
-    this.removeExistedPlayerIp();
+  computed: {
+     ...mapGetters(["session"]),
   },
 
   methods: {
     enterInSession() {
-      axios.get("https://api.my-ip.io/ip.json").then((response) => {
-        const ip = response.data.ip;
-        if (!this.form.name) {
-          this.errorMessage = "É preciso informar um nome.";
-          return;
-        }
+      if (!this.form.name) {
+        this.errorMessage = "É preciso informar um nome.";
+        return;
+      }
 
-        this.errorMessage = null;
+      this.errorMessage = null;
 
-        Cookies.set("id", Math.random().toString(36).slice(-8));
+      var player = {
+        id: this.session,
+        name: this.form.name,
+      };
 
-        let id = Cookies.get("id");
-
-        var player = {
-          id: id,
-          name: this.form.name,
-          ip: ip,
-        };
-
-        this.$cable.perform({
-          channel: this.channel,
-          action: "create_player",
-          data: {
-            player: player,
-          },
-        });
-
-        this.$router.push("/rooms");
+      this.$cable.perform({
+        channel: this.channel,
+        action: "create_player",
+        data: {
+          player: player,
+        },
       });
-    },
 
-    removeExistedPlayerIp() {
-      axios.get("https://api.my-ip.io/ip.json").then((response) => {
-        const ip = response.data.ip;
-
-        this.$cable.perform({
-          channel: this.channel,
-          action: "remove_player_from_session",
-          data: {
-            ip: ip,
-          },
-        });
-      });
+      this.$router.push("/rooms");
     },
   },
 };

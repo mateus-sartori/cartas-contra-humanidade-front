@@ -5,6 +5,8 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from "vuex";
+
 export default {
   name: "App",
   data() {
@@ -22,9 +24,18 @@ export default {
   },
 
   mounted() {
+    const session = Math.random().toString(36).slice(-8);
+
+    this.setSession(session);
+
     this.$cable.subscribe({
       channel: this.channel,
+      session: session,
     });
+  },
+
+  methods: {
+    ...mapActions(["setSession"]),
   },
 };
 </script>

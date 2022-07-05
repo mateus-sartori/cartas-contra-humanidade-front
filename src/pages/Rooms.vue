@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import { Cookies } from "quasar";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "Room",
@@ -58,11 +58,6 @@ export default {
 
   channels: {
     CartasContraHumanidadeChannel: {
-      connected() {
-        this.loadPlayers();
-        this.loadRooms();
-      },
-
       received(data) {
         switch (data.action) {
           case "list_players":
@@ -78,28 +73,21 @@ export default {
     },
   },
 
+  computed: {
+    ...mapGetters(["session", "room"]),
+  },
+
   watch: {
     players() {
       this.currentPlayer = this.players.find((player) => {
-        return player.id === Cookies.get("id");
+        return player.id === this.session;
       });
-
       if (this.currentPlayer) return;
       else {
-        this.$q.notify({
-          icon: "announcement",
-          message: "Jogador não encontrado, entre com uma sessão antes.",
-          color: "brown",
-          classes: "glossy",
-        });
-
-        Cookies.remove("id");
-        Cookies.remove("room");
         this.removePlayer();
-
         setTimeout(() => {
           this.$router.push("/login");
-        }, 150);
+        }, 200);
       }
     },
   },
@@ -117,13 +105,16 @@ export default {
   },
 
   methods: {
+    ...mapActions(["setRoom"]),
+
     createRoom() {
-      Cookies.set("room", Math.random().toString(36).slice(-10));
-      let roomId = Cookies.get("room");
+      const room = Math.random().toString(36).slice(-10);
+
+      this.setRoom(room);
 
       var roomInfo = {
         host: this.currentPlayer.name,
-        id: roomId,
+        id: this.room,
       };
 
       this.$cable.perform({
@@ -142,7 +133,7 @@ export default {
     },
 
     putPlayerInRoom(room) {
-      Cookies.set("room", room.id);
+      this.setRoom(room.id);
 
       this.$cable.perform({
         channel: this.channel,
@@ -174,16 +165,12 @@ export default {
     },
 
     removePlayer() {
-      axios.get("https://api.my-ip.io/ip.json").then((response) => {
-        const ip = response.data.ip;
-
-        this.$cable.perform({
-          channel: this.channel,
-          action: "remove_player_from_session",
-          data: {
-            ip: ip,
-          },
-        });
+      this.$cable.perform({
+        channel: this.channel,
+        action: "remove_player_from_session",
+        data: {
+          player: this.currentPlayer,
+        },
       });
     },
   },
