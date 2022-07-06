@@ -22,7 +22,7 @@
           v-for="(room, index) in rooms"
           v-bind:key="index"
         >
-          <div v-if="currentPlayer">Sala de: {{ room.host }}</div>
+          <div v-if="currentPlayer">Sala de: {{ room.host_name }}</div>
           <div v-if="room.players">
             Total de Jogadores: {{ room.players.length }}/6
           </div>
@@ -113,7 +113,8 @@ export default {
       this.setRoom(room);
 
       var roomInfo = {
-        host: this.currentPlayer.name,
+        host: this.currentPlayer.id,
+        hostName: this.currentPlayer.name,
         id: this.room,
       };
 
