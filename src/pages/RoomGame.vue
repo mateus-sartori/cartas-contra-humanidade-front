@@ -2,9 +2,21 @@
   <div>
     <div class="container">
       <div class="flex flex-center">
-        <span class="text-bold text-subtitle2" v-if="session_room">
-          Sessão: {{ session_room.id }}
-        </span>
+        <div class="column items-center">
+          <div class="q-mt-sm">
+            <span class="text-bold text-subtitle2" v-if="session_room">
+              Sessão: {{ session_room.id }}
+            </span>
+          </div>
+          <div class="q-mt-md">
+            <q-btn
+              label="Começar game"
+              color="red-8"
+              no-caps
+              @click="startGame(session_room.id)"
+            />
+          </div>
+        </div>
       </div>
       <div class="row q-py-md">
         <div class="column" v-if="players">
@@ -52,6 +64,7 @@ export default {
   data() {
     return {
       channel: "CartasContraHumanidadeChannel",
+      startGameChannel: "CartasContraHumanidadeGameRuleChannel",
       rooms: [],
       currentPlayer: null,
       players: null,
@@ -59,12 +72,26 @@ export default {
   },
 
   channels: {
+    CartasContraHumanidadeGameRuleChannel: {
+      connected() {
+        console.log("connected on", this.session_room.id);
+      },
+    },
+
     CartasContraHumanidadeChannel: {
       received(data) {
         switch (data.action) {
           case "list_rooms":
             this.rooms = data.rooms;
             this.loadPlayersInRoom();
+            break;
+          case "start_game":
+            if (this.session_room.id == data.session) {
+              this.$cable.subscribe({
+                channel: this.startGameChannel,
+                session: data.session,
+              });
+            }
             break;
           default:
             break;
@@ -129,6 +156,18 @@ export default {
 
   methods: {
     ...mapActions(["setRoom"]),
+
+    startGame(room_id) {
+      if (this.session_room.id == room_id) {
+        this.$cable.perform({
+          channel: this.channel,
+          action: "start_game",
+          data: {
+            session: room_id,
+          },
+        });
+      }
+    },
 
     loadPlayersInRoom() {
       if (!this.session_room) {
