@@ -33,8 +33,6 @@ import { mapGetters } from "vuex";
 export default {
   data() {
     return {
-      getInAlreadyRoom: false,
-
       form: {
         name: null,
       },
