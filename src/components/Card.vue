@@ -10,7 +10,7 @@
     >
       <div>
         <div v-if="ownPlayer" class="row justify-center">
-          {{ ownPlayer ? "Você" : "" }}
+          {{ ownPlayer && ownPlayer != undefined ? "Você" : "" }}
         </div>
         <div
           class="q-pa-sm row items-center"
@@ -49,7 +49,6 @@
 </template>
 
 <script>
-import { Cookies } from "quasar";
 export default {
   name: "Card",
   props: [
@@ -67,6 +66,7 @@ export default {
 
   computed: {
     ownPlayer() {
+      if ((this.player || this.currentPlayer) === undefined) return false
       return this.player === this.currentPlayer
     }
   }

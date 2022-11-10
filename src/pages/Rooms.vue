@@ -28,11 +28,19 @@
           </div>
           <div>
             <q-btn
+              v-if="room.status != 'started'"
               label="Entrar na sala"
               no-caps
               glossy
               @click="putPlayerInRoom(room)"
               color="green-7"
+            />
+            <q-btn
+              v-else
+              label="Jogo em andamento..."
+              no-caps
+              disabled
+              color="red-7"
             />
           </div>
         </q-card>
@@ -113,9 +121,10 @@ export default {
       this.setRoom(room);
 
       var roomInfo = {
+        status: 'pending',
         host: this.currentPlayer.id,
         hostName: this.currentPlayer.name,
-        id: this.room,
+        id: this.room
       };
 
       this.$cable.perform({

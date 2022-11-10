@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import session from "./modules/session";
+import boardGame from './modules/board_game'
 
 // import example from './module-example'
 
@@ -18,6 +19,7 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   modules: {
     session,
+    boardGame
   },
 
   strict: process.env.DEBUGGING,

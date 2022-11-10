@@ -25,6 +25,7 @@ const routes = [
     children: [
       { path: "/rooms", component: () => import("pages/Rooms.vue") },
       { path: "/room/:id", component: () => import("pages/RoomGame.vue") },
+      { path: "/board-game", component: () => import("components/BoardGame.vue") },
     ],
   },
 

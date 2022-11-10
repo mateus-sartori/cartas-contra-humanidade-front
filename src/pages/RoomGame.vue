@@ -1,5 +1,6 @@
 <template>
   <div>
+
     <div class="container">
       <div class="flex flex-center">
         <div class="column items-center">
@@ -8,7 +9,7 @@
               Sessão: {{ session_room.id }}
             </span>
           </div>
-          <div class="q-mt-md">
+          <div class="q-mt-md" v-if="!isGameStared && playerIsHost">
             <q-btn
               label="Começar game"
               color="red-8"
@@ -16,9 +17,13 @@
               @click="startGame(session_room.id)"
             />
           </div>
+          <span class="text-h6" v-if="bossRound">
+            Patrão da rodada: <b>{{bossRound.name}}</b>
+          </span>
         </div>
       </div>
-      <div class="row q-py-md">
+
+      <div class="row q-ml-sm">
         <div class="column" v-if="players">
           <div
             v-for="(player, index) in players.slice(0, 3)"
@@ -32,17 +37,28 @@
             />
           </div>
         </div>
-        <div class="column" v-if="players">
-          <div
-            v-for="(player, index) in players.slice(3, 6)"
-            v-bind:key="index"
-          >
-            <card
-              backgroundColor="bg-white"
-              textColor="text-black"
-              :player="player"
-              :currentPlayer="currentPlayer"
-            />
+
+        <div class="col" v-if="isGameStared">
+          <board-game
+            :current-player="currentPlayer"
+            :session="session_room.id"
+            :players="players"
+          />
+        </div>
+
+        <div class="row q-mr-sm">
+          <div class="column" v-if="players">
+            <div
+              v-for="(player, index) in players.slice(3, 6)"
+              v-bind:key="index"
+            >
+              <card
+                backgroundColor="bg-white"
+                textColor="text-black"
+                :player="player"
+                :currentPlayer="currentPlayer"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -52,6 +68,7 @@
 
 <script>
 import Card from "components/Card";
+import BoardGame from "components/BoardGame.vue";
 
 import { mapGetters, mapActions } from "vuex";
 
@@ -60,6 +77,7 @@ export default {
 
   components: {
     Card,
+    BoardGame,
   },
   data() {
     return {
@@ -68,29 +86,38 @@ export default {
       rooms: [],
       currentPlayer: null,
       players: null,
+
+      isGameStared: false,
     };
   },
 
   channels: {
     CartasContraHumanidadeGameRuleChannel: {
       connected() {
-        console.log("connected on", this.session_room.id);
-      },
+        console.log("Room Game Connect on:", this.session_room.id);
+        this.setBossRound(this.bossRound)
+      }
     },
 
     CartasContraHumanidadeChannel: {
-      received(data) {
-        switch (data.action) {
+      received(response) {
+        switch (response.action) {
           case "list_rooms":
-            this.rooms = data.rooms;
+            this.rooms = response.rooms;
             this.loadPlayersInRoom();
             break;
           case "start_game":
-            if (this.session_room.id == data.session) {
+            if (this.session_room.id == response.session) {
               this.$cable.subscribe({
                 channel: this.startGameChannel,
-                session: data.session,
+                session: response.session,
               });
+              
+              if(response.status == 'started') {
+                this.loadRooms()
+                this.setSessionStatus(response.status)
+                this.isGameStared = true;
+              }
             }
             break;
           default:
@@ -101,12 +128,22 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["session", "room"]),
+    ...mapGetters(["session", "room", "bossRound"]),
 
     session_room() {
-      return this.rooms.find((room) => {
-        return room.id == this.room;
-      });
+      if (this.rooms) {
+        return this.rooms.find((room) => {
+          return room.id == this.room;
+        });
+      }
+      return null;
+    },
+
+    playerIsHost() {
+      if (this.session_room && this.currentPlayer) {
+        return this.session_room.host == this.currentPlayer.id;
+      }
+      return null;
     },
   },
 
@@ -137,12 +174,11 @@ export default {
   destroyed() {
     this.removePlayerFromRoom();
     this.setRoom(null);
-    if (this.players.length <= 1) {
-      this.deleteRoom();
-    }
+    if (this.players && this.players.length <= 1) this.deleteRoom();
   },
 
   mounted() {
+    this.setBossRound(null)
     this.$q.loading.show({
       message: "Entrando na sessão...",
     });
@@ -155,7 +191,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(["setRoom"]),
+    ...mapActions(["setRoom", "setBossRound", "setSessionStatus"]),
 
     startGame(room_id) {
       if (this.session_room.id == room_id) {
@@ -164,8 +200,11 @@ export default {
           action: "start_game",
           data: {
             session: room_id,
+            status: 'started'
           },
         });
+        const bossRound = this.players[Math.floor(Math.random() * this.players.length)];
+        this.setBossRound(bossRound)
       }
     },
 
