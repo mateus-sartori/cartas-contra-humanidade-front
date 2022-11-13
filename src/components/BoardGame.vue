@@ -21,9 +21,7 @@
             />
           </div>
         </div>
-        <div class="row col justify-center">
-          <card />
-        </div>
+
         <div class="row col justify-end">
           <div @click="buyCard(whiteCards[0])" v-show="whiteCards.length >= 1">
             <card
@@ -33,6 +31,7 @@
           </div>
         </div>
       </div>
+
       <div class="row q-mt-md">
         <div class="row col justify-center" v-if="cardsInTable">
           <div v-for="(card, index) in cardsInTable" v-bind:key="index">
@@ -74,7 +73,7 @@ export default {
   props: {
     players: {
       type: Array,
-    }
+    },
   },
 
   data() {

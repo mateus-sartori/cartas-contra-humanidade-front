@@ -1,7 +1,5 @@
 <template>
   <div>
-    {{isBlackCardSelected}}
-    <!-- Cartas da mão  -->
     <div class="row col justify-center items-center q-gutter-x-md" v-if="!isBossCurrentPlayer">
       <q-btn
         icon="chevron_left"
@@ -165,6 +163,7 @@ export default {
         return;
       }
 
+      // TODO: Corrigir remoção da carta da mão.
       this.cardsInHands = this.listRemoveByIndex(this.cards, card);
 
       this.broadcastTo(

@@ -185,7 +185,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(["setRoom", "setBossRound", "setSessionStatus"]),
+    ...mapActions(["setRoom", "setBossRound", "setSessionStatus", "setCardsInTable"]),
 
     startGame(room_id) {
       if (this.room.id == room_id) {
@@ -212,6 +212,7 @@ export default {
           color: "negative",
           classes: "glossy",
         });
+        this.setCardsInTable([]);
       } else if (this.room) {
         this.players = this.room["players"];
       }
