@@ -28,7 +28,7 @@
   </div>
 </template>
 <script>
-import { mapGetters } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   data() {
@@ -47,6 +47,8 @@ export default {
   },
 
   methods: {
+    ...mapActions(['setCurrentPlayer']),
+
     enterInSession() {
       if (!this.form.name) {
         this.errorMessage = "É preciso informar um nome.";
@@ -59,6 +61,8 @@ export default {
         id: this.session,
         name: this.form.name,
       };
+
+      this.setCurrentPlayer(player)
 
       this.$cable.perform({
         channel: this.channel,

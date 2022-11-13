@@ -1,12 +1,11 @@
 <template>
   <div>
-
     <div class="container">
       <div class="flex flex-center">
         <div class="column items-center">
           <div class="q-mt-sm">
-            <span class="text-bold text-subtitle2" v-if="session_room">
-              Sessão: {{ session_room.id }}
+            <span class="text-bold text-subtitle2" v-if="room">
+              Sessão: {{ room.id }}
             </span>
           </div>
           <div class="q-mt-md" v-if="!isGameStared && playerIsHost">
@@ -14,11 +13,11 @@
               label="Começar game"
               color="red-8"
               no-caps
-              @click="startGame(session_room.id)"
+              @click="startGame(room.id)"
             />
           </div>
           <span class="text-h6" v-if="bossRound">
-            Patrão da rodada: <b>{{bossRound.name}}</b>
+            Patrão da rodada: <b>{{ bossRound.name }}</b>
           </span>
         </div>
       </div>
@@ -41,7 +40,7 @@
         <div class="col" v-if="isGameStared">
           <board-game
             :current-player="currentPlayer"
-            :session="session_room.id"
+            :room="room.id"
             :players="players"
           />
         </div>
@@ -84,7 +83,6 @@ export default {
       channel: "CartasContraHumanidadeChannel",
       startGameChannel: "CartasContraHumanidadeGameRuleChannel",
       rooms: [],
-      currentPlayer: null,
       players: null,
 
       isGameStared: false,
@@ -94,9 +92,9 @@ export default {
   channels: {
     CartasContraHumanidadeGameRuleChannel: {
       connected() {
-        console.log("Room Game Connect on:", this.session_room.id);
-        this.setBossRound(this.bossRound)
-      }
+        console.log("Room Game Connect on:", this.room.id);
+        this.setBossRound(this.bossRound);
+      },
     },
 
     CartasContraHumanidadeChannel: {
@@ -107,15 +105,15 @@ export default {
             this.loadPlayersInRoom();
             break;
           case "start_game":
-            if (this.session_room.id == response.session) {
+            if (this.room.id == response.session) {
               this.$cable.subscribe({
                 channel: this.startGameChannel,
                 session: response.session,
               });
-              
-              if(response.status == 'started') {
-                this.loadRooms()
-                this.setSessionStatus(response.status)
+
+              if (response.status == "started") {
+                this.loadRooms();
+                this.setSessionStatus(response.status);
                 this.isGameStared = true;
               }
             }
@@ -128,20 +126,11 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["session", "room", "bossRound"]),
-
-    session_room() {
-      if (this.rooms) {
-        return this.rooms.find((room) => {
-          return room.id == this.room;
-        });
-      }
-      return null;
-    },
+    ...mapGetters(["session", "room", "bossRound", "currentPlayer"]),
 
     playerIsHost() {
-      if (this.session_room && this.currentPlayer) {
-        return this.session_room.host == this.currentPlayer.id;
+      if (this.room && this.currentPlayer) {
+        return this.room.host == this.currentPlayer.id;
       }
       return null;
     },
@@ -150,10 +139,6 @@ export default {
   watch: {
     players() {
       if (this.session) {
-        this.currentPlayer = this.players.find((player) => {
-          return player.id === this.session;
-        });
-
         if (this.currentPlayer) return;
         else {
           this.$q.notify({
@@ -169,6 +154,16 @@ export default {
         }
       }
     },
+
+    rooms() {
+      if (this.rooms) {
+        const room = this.rooms.find((room) => {
+          return room.id == this.room.id;
+        });
+        this.setRoom(room);
+        this.players = this.room["players"];
+      }
+    },
   },
 
   destroyed() {
@@ -178,7 +173,7 @@ export default {
   },
 
   mounted() {
-    this.setBossRound(null)
+    this.setBossRound(null);
     this.$q.loading.show({
       message: "Entrando na sessão...",
     });
@@ -194,22 +189,23 @@ export default {
     ...mapActions(["setRoom", "setBossRound", "setSessionStatus"]),
 
     startGame(room_id) {
-      if (this.session_room.id == room_id) {
+      if (this.room.id == room_id) {
         this.$cable.perform({
           channel: this.channel,
           action: "start_game",
           data: {
             session: room_id,
-            status: 'started'
+            status: "started",
           },
         });
-        const bossRound = this.players[Math.floor(Math.random() * this.players.length)];
-        this.setBossRound(bossRound)
+        const bossRound =
+          this.players[Math.floor(Math.random() * this.players.length)];
+        this.setBossRound(bossRound);
       }
     },
 
     loadPlayersInRoom() {
-      if (!this.session_room) {
+      if (!this.room) {
         this.$router.push("/rooms");
         this.$q.notify({
           icon: "announcement",
@@ -217,8 +213,8 @@ export default {
           color: "negative",
           classes: "glossy",
         });
-      } else if (this.session_room) {
-        this.players = this.session_room["players"];
+      } else if (this.room) {
+        this.players = this.room["players"];
       }
     },
 
@@ -237,13 +233,13 @@ export default {
     },
 
     removePlayerFromRoom() {
-      if (this.session_room) {
+      if (this.room) {
         this.$cable.perform({
           channel: this.channel,
           action: "remove_player_from_room",
           data: {
             player: this.currentPlayer,
-            room_id: this.session_room["id"],
+            room_id: this.room["id"],
           },
         });
       }
@@ -254,7 +250,7 @@ export default {
         channel: this.channel,
         action: "delete_room",
         data: {
-          room_id: this.session_room["id"],
+          room_id: this.room["id"],
         },
       });
     },

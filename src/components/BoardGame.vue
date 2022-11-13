@@ -25,14 +25,17 @@
           <card />
         </div>
         <div class="row col justify-end">
-          <div @click="buyCard(cardsToBuy[0])" v-show="cardsToBuy.length >= 1">
-            <card :canHover="!isBossCurrentPlayer" :text="`Restantes ${cardsToBuy.length}`" />
+          <div @click="buyCard(whiteCards[0])" v-show="whiteCards.length >= 1">
+            <card
+              :canHover="!isBossCurrentPlayer"
+              :text="`Restantes ${whiteCards.length}`"
+            />
           </div>
-          <card />
         </div>
       </div>
       <div class="row q-mt-md">
-        <div class="row col justify-center">
+        {{ cardsInTable }}
+        <div class="row col justify-center" v-if="cardsInTable">
           <div v-for="(card, index) in cardsInTable" v-bind:key="index">
             <card
               backgroundColor="bg-white"
@@ -42,12 +45,25 @@
           </div>
         </div>
       </div>
+
+      <div
+        v-if="
+          cardsInHands['cards'] && !isBossCurrentPlayer && blackCardSelected
+        "
+      >
+        <cards-in-hands
+          v-show="cardsInHands['cards']"
+          :cards="cardsInHands['cards']"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import Card from "components/Card";
+import CardsInHands from "components/CardsInHands.vue";
+
 import { mapGetters, mapActions } from "vuex";
 
 export default {
@@ -55,17 +71,14 @@ export default {
 
   components: {
     Card,
+    CardsInHands,
   },
 
   props: {
     players: {
-      type: Array
+      type: Array,
     },
-    currentPlayer: {
-      type: Object,
-      default: null,
-    },
-    session: {
+    room: {
       type: String,
       default: null,
     },
@@ -73,102 +86,20 @@ export default {
 
   data() {
     return {
-      showTotalCardsInHands: 5,
       blackCardSelectedPosition: 0,
-      currentPage: 1,
 
-      blackCards: null,
+      blackCards: [],
+      whiteCards: [],
+
+      cardsInHands: {},
 
       blackCardSelected: null,
-
-      cardsToBuy: [
-        {
-          id: 11,
-          text: "Flanelinhas",
-        },
-        {
-          id: 12,
-          text: "Células tronco",
-        },
-        {
-          id: 13,
-          text: "Tom Cruise",
-        },
-        {
-          id: 14,
-          text: "Lobotomia",
-        },
-        {
-          id: 15,
-          text: "Sexo entre pandas",
-        },
-        {
-          id: 16,
-          text: "Lamber coisas para estabelecer que são propriedade sua",
-        },
-        {
-          id: 17,
-          text: "Amizade Colorida",
-        },
-      ],
-
-      cards: [
-        {
-          id: 1,
-          text: "O Doce Veneno do Escorpião",
-        },
-        {
-          id: 2,
-          text: "Os pobres",
-        },
-        {
-          id: 3,
-          text: "Catapultas",
-        },
-        {
-          id: 4,
-          text: "Design Inteligente",
-        },
-        {
-          id: 5,
-          text: "Limpar a bunda dela",
-        },
-        {
-          id: 6,
-          text: "A força",
-        },
-        {
-          id: 7,
-          text: "Lingua solta",
-        },
-        {
-          id: 8,
-          text: "Imagens de seios",
-        },
-        {
-          id: 9,
-          text: "Servidão",
-        },
-        {
-          id: 10,
-          text: "Ejaculação precoce",
-        },
-      ],
-
-      cardsInHands: [],
-
-      disableForward: false,
-      disablePrevious: true,
 
       selectedCardInHandsId: null,
       isSelectingCardInHands: false,
       blockCardHands: false,
       blockNewBlackCard: false,
       isPendingLeaderStart: true,
-
-      cardsInTable: [],
-
-      currentLeader: null,
 
       player: null,
 
@@ -182,10 +113,6 @@ export default {
 
   channels: {
     CartasContraHumanidadeGameRuleChannel: {
-      connected() {
-        console.log("Board Game connect on:  " + this.session);
-      },
-
       received(response) {
         switch (response.action) {
           case "load_black_cards":
@@ -194,8 +121,19 @@ export default {
           case "play_black_card":
             this.nextBlackCard(response.data);
             break;
-          case 'set_boss_round':
-            this.setBossRound(response.data)
+          case "set_boss_round":
+            this.setBossRound(response.data);
+            break;
+          case "load_white_cards":
+            this.whiteCards = response.data;
+            break;
+          case "load_cards_in_hands":
+            response.data.info_players.forEach((element) => {
+              if (element["player"]["id"] == this.currentPlayer.id) {
+                this.cardsInHands["cards"] = element["cards_in_hands"];
+              }
+            });
+            this.whiteCards = response.data.white_cards;
             break;
           default:
             break;
@@ -205,96 +143,95 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["bossRound"]),
+    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable"]),
 
     isBossCurrentPlayer() {
       if (this.currentPlayer && this.bossRound) {
-        return this.currentPlayer.id === this.bossRound.id
+        return this.currentPlayer.id === this.bossRound.id;
       }
       return false;
-    }
+    },
   },
 
   created() {
-    this.$q.loading.show({
-      message: "Começando jogo...",
-    });
+    var data = {
+      bossRound: this.bossRound,
+    };
 
-    setTimeout(() => {
-      this.broadcastTo("load_black_cards");
+    if (data.bossRound) {
+      this.$q.loading.show({
+        message: "Começando jogo...",
+      });
 
-      var data = {
-        bossRound: this.bossRound
-      }
-      this.broadcastTo("boss_round", data);
+      setTimeout(() => {
+        this.broadcastTo(
+          "load_black_cards",
+          this.startGameChannel,
+          this.room
+        );
+        this.broadcastTo(
+          "load_white_cards",
+          this.startGameChannel,
+          this.room
+        );
+        this.broadcastTo(
+          "boss_round",
+          this.startGameChannel,
+          this.room,
+          data
+        );
 
-      this.$q.loading.hide();
-    }, 500);
+        this.$q.loading.hide();
+      }, 500);
+
+      setTimeout(() => {
+        this.loadCardsInHands();
+      }, 1000);
+    }
   },
 
   methods: {
-    ...mapActions(["setBossRound"]),
+    ...mapActions(["setBossRound", "setCardsInTable"]),
 
-    broadcastTo(action, data) {
-      this.$cable.perform({
-        channel: this.startGameChannel,
-        action: action,
-        data: {
-          ...data,
-          session: this.session,
-        },
-      });
-    },
-
-    loadCards() {
-      this.broadcastTo("load_black_cards");
+    loadCardsInHands() {
+      var data = {
+        players: this.players,
+      };
+      this.broadcastTo(
+        "load_cards_in_hands",
+        this.startGameChannel,
+        this.room,
+        data
+      );
     },
 
     playBlackCard() {
       if (this.isBossCurrentPlayer) {
-        this.broadcastTo("play_black_card", {
-          selectedBlackCard:
-            this.blackCards[Math.floor(Math.random() * this.blackCards.length)],
-        });
+        this.broadcastTo(
+          "play_black_card",
+          this.startGameChannel,
+          this.room,
+          {
+            selectedBlackCard: this.randomElement(this.blackCards),
+          }
+        );
+      }
+    },
+
+    nextBlackCard(selectedBlackCard) {
+      if (this.blackCards.length > 1 && !this.blockNewBlackCard) {
+        this.blackCards.shift();
+        this.blackCardSelected = selectedBlackCard;
+        this.blockNewBlackCard = true;
+        this.resetRound();
       }
     },
 
     resetRound() {
       this.blockCardHands = false;
       this.selectedCardInHandsId = null;
-      this.cardsInTable = [];
-    },
 
-    buyCard(card) {
-      if (this.cards.length <= 9) {
-        this.cards.push(card);
-        this.cardsToBuy.shift();
-        this.cardsInHands = this.cards.slice(5, 10);
-        this.currentPage = 2;
-        this.checkHandCards();
-      }
-    },
-
-    checkHandCards() {
-      if (this.currentPage == 2) {
-        this.disableForward = true;
-        this.disablePrevious = false;
-      } else {
-        this.disableForward = false;
-        this.disablePrevious = true;
-      }
-    },
-
-    nextBlackCard(selectedBlackCard) {
-      if (
-        this.blackCards.length > 1 &&
-        !this.blockNewBlackCard
-      ) {
-        this.blackCards.shift();
-        this.blackCardSelected = selectedBlackCard;
-        this.blockNewBlackCard = true;
-        this.resetRound();
-      }
+      this.setCardsInTable([]);
     },
   },
 };

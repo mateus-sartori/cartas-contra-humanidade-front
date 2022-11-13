@@ -27,6 +27,7 @@
             Total de Jogadores: {{ room.players.length }}/6
           </div>
           <div>
+            {{ room }}
             <q-btn
               v-if="room.status != 'started'"
               label="Entrar na sala"
@@ -118,14 +119,14 @@ export default {
     createRoom() {
       const room = Math.random().toString(36).slice(-10);
 
-      this.setRoom(room);
-
       var roomInfo = {
-        status: 'pending',
+        status: "pending",
         host: this.currentPlayer.id,
         hostName: this.currentPlayer.name,
-        id: this.room
+        id: room,
       };
+
+      this.setRoom(roomInfo);
 
       this.$cable.perform({
         channel: this.channel,
@@ -143,7 +144,7 @@ export default {
     },
 
     putPlayerInRoom(room) {
-      this.setRoom(room.id);
+      this.setRoom(room);
 
       this.$cable.perform({
         channel: this.channel,
@@ -154,7 +155,6 @@ export default {
           players: room["players"],
         },
       });
-
       this.$q.loading.hide();
 
       this.$router.push("/room/" + room.id);
