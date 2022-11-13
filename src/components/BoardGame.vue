@@ -139,7 +139,7 @@ export default {
             this.whiteCards = response.data.white_cards;
             break;
           case "reveal_card_in_table":
-            this.updateCardsInTable(response.data)
+            this.updateCardsInTable(response.data);
           default:
             break;
         }
@@ -202,7 +202,12 @@ export default {
   },
 
   methods: {
-    ...mapActions(["setBossRound", "setCardsInTable", "setCardsInHands", "updateCardsInTable"]),
+    ...mapActions([
+      "setBossRound",
+      "setCardsInTable",
+      "setCardsInHands",
+      "updateCardsInTable",
+    ]),
 
     loadCardsInHands() {
       var data = {
@@ -242,8 +247,8 @@ export default {
       if (this.isBossCurrentPlayer) {
         const data = {
           cardsInTable: this.cardsInTable,
-          card: card
-        }
+          card: card,
+        };
 
         this.broadcastTo(
           "reveal_card_in_table",
