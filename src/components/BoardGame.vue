@@ -26,11 +26,14 @@
           </div>
           <div class="row" v-if="cardsInTable">
             <div v-for="(card, index) in cardsInTable" v-bind:key="index">
-              <card
-                backgroundColor="bg-white"
-                textColor="text-black"
-                :text="card.text"
-              />
+              <div @click="revealCard(card)">
+                <card
+                  backgroundColor="bg-white"
+                  textColor="text-black"
+                  :canHover="isBossCurrentPlayer"
+                  :text="card.revealed ? card.text : ''"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -130,11 +133,13 @@ export default {
             response.data.info_players.forEach((element) => {
               if (element["player"]["id"] == this.currentPlayer.id) {
                 this.cards["cards"] = element["cards_in_hands"];
-                this.setCardsInHands(this.cards["cards"])
+                this.setCardsInHands(this.cards["cards"]);
               }
             });
             this.whiteCards = response.data.white_cards;
             break;
+          case "reveal_card_in_table":
+            this.updateCardsInTable(response.data)
           default:
             break;
         }
@@ -143,7 +148,13 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable", "room", "cardsInHands"]),
+    ...mapGetters([
+      "bossRound",
+      "currentPlayer",
+      "cardsInTable",
+      "room",
+      "cardsInHands",
+    ]),
 
     isBossCurrentPlayer() {
       if (this.currentPlayer && this.bossRound) {
@@ -191,7 +202,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(["setBossRound", "setCardsInTable", "setCardsInHands"]),
+    ...mapActions(["setBossRound", "setCardsInTable", "setCardsInHands", "updateCardsInTable"]),
 
     loadCardsInHands() {
       var data = {
@@ -224,6 +235,22 @@ export default {
         this.blackCardSelected = selectedBlackCard;
         this.isBlackCardSelected = true;
         this.resetRound();
+      }
+    },
+
+    revealCard(card) {
+      if (this.isBossCurrentPlayer) {
+        const data = {
+          cardsInTable: this.cardsInTable,
+          card: card
+        }
+
+        this.broadcastTo(
+          "reveal_card_in_table",
+          this.startGameChannel,
+          this.room.id,
+          data
+        );
       }
     },
 

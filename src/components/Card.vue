@@ -9,13 +9,7 @@
       style="width: 130px"
     >
       <div>
-        <div v-if="ownPlayer" class="row justify-center">
-          {{ ownPlayer && ownPlayer != undefined ? "Você" : "" }}
-        </div>
-        <div
-          class="q-pa-sm row items-center"
-          :class="player ? 'justify-center' : 'justify-start'"
-        >
+        <div class="q-pa-sm row items-center">
           <div style="word-wrap: break-word; height: 120px" :class="textColor">
             <div v-if="text">
               <span :style="text.length >= 40 ? 'font-size: 11px' : ''">
@@ -23,24 +17,11 @@
               </span>
             </div>
           </div>
-          <div class="row" v-if="player">
-            <q-avatar color="blue-8" text-color="white">{{
-              player.name[0].toUpperCase()
-            }}</q-avatar>
-          </div>
         </div>
         <q-separator />
         <div :class="`${backgroundColor} text-bold`">
           <q-card-section class="q-pa-xs" :class="textColor">
-            <div class="row justify-between" v-if="player">
-              <span class="text-caption"> {{ player.name }} </span>
-              <span class="text-caption text-grey-8">
-                Pontos: {{ player.pts }}
-              </span>
-            </div>
-            <span v-else style="font-size: 9px">
-              Cartas contra humanidade
-            </span>
+            <span style="font-size: 9px"> Cartas contra humanidade </span>
           </q-card-section>
         </div>
       </div>
@@ -55,21 +36,12 @@ export default {
     "backgroundColor",
     "textColor",
     "text",
-    "player",
     "canHover",
-    "currentPlayer",
   ],
 
   data() {
     return {};
   },
-
-  computed: {
-    ownPlayer() {
-      if ((this.player || this.currentPlayer) === undefined) return false
-      return this.player === this.currentPlayer
-    }
-  }
 };
 </script>
 

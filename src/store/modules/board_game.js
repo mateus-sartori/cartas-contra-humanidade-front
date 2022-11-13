@@ -15,6 +15,10 @@ const state = {
 
     setCardsInTable({commit}, payload) {
       commit("SET_CARDS_IN_TABLE", payload)
+    },
+
+    updateCardsInTable({commit}, payload) {
+      commit("UPDATE_CARDS_IN_TABLE", payload)
     }
   };
   
@@ -23,6 +27,9 @@ const state = {
     SET_CARDS_IN_TABLE: (state, payload) => {
       if (payload.length == 0) return state.cardsInTable = []
       if (payload) state.cardsInTable.push(payload)
+    },
+    UPDATE_CARDS_IN_TABLE: (state, payload) => {
+      if (payload) state.cardsInTable = payload
     }
   };
   
