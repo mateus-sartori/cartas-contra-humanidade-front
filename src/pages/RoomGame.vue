@@ -10,10 +10,10 @@
           </div>
           <div class="q-mt-md" v-if="!isGameStared && playerIsHost">
             <q-btn
-              label="Começar game"
-              color="red-8"
-              no-caps
-              @click="startGame(room.id)"
+            label="Começar game"
+            color="red-8"
+            no-caps
+            @click="startGame(room.id)"
             />
           </div>
           <span class="text-h6" v-if="bossRound">
@@ -21,52 +21,20 @@
           </span>
         </div>
       </div>
+    </div>
 
-      <div class="row q-ml-sm">
-        <div class="column" v-if="players">
-          <div
-            v-for="(player, index) in players.slice(0, 3)"
-            v-bind:key="index"
-          >
-            <card
-              backgroundColor="bg-white"
-              textColor="text-black"
-              :player="player"
-              :currentPlayer="currentPlayer"
-            />
-          </div>
-        </div>
-
-        <div class="col" v-if="isGameStared">
-          <board-game
-            :current-player="currentPlayer"
-            :players="players"
-          />
-        </div>
-
-        <div class="row q-mr-sm">
-          <div class="column" v-if="players">
-            <div
-              v-for="(player, index) in players.slice(3, 6)"
-              v-bind:key="index"
-            >
-              <card
-                backgroundColor="bg-white"
-                textColor="text-black"
-                :player="player"
-                :currentPlayer="currentPlayer"
-              />
-            </div>
-          </div>
-        </div>
+    <div class="container">
+      <score />
+      <div v-if="isGameStared">
+        <board-game :current-player="currentPlayer" :players="players" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import Card from "components/Card";
 import BoardGame from "components/BoardGame.vue";
+import Score from "components/Score.vue";
 
 import { mapGetters, mapActions } from "vuex";
 
@@ -74,8 +42,8 @@ export default {
   name: "RoomGame",
 
   components: {
-    Card,
     BoardGame,
+    Score
   },
   data() {
     return {
@@ -185,7 +153,12 @@ export default {
   },
 
   methods: {
-    ...mapActions(["setRoom", "setBossRound", "setSessionStatus", "setCardsInTable"]),
+    ...mapActions([
+      "setRoom",
+      "setBossRound",
+      "setSessionStatus",
+      "setCardsInTable",
+    ]),
 
     startGame(room_id) {
       if (this.room.id == room_id) {

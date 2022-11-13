@@ -1,9 +1,12 @@
 <template>
   <div>
-    <div class="col">
+    <div class="q-my-xl">
       <div class="row">
-        <div class="row col" v-if="blackCards">
-          <div @click="playBlackCard()" v-show="blackCards.length > 1">
+        <div class="col-12 row justify-center" v-if="blackCards">
+          <div
+            @click="playBlackCard()"
+            v-show="blackCards.length > 1 && isBossCurrentPlayer"
+          >
             <card
               backgroundColor="bg-black"
               textColor="text-white"
@@ -13,6 +16,7 @@
               :text="`Restantes ${blackCards.length - 1}`"
             />
           </div>
+
           <div v-if="blackCardSelected">
             <card
               backgroundColor="bg-black"
@@ -20,10 +24,22 @@
               :text="blackCardSelected.text"
             />
           </div>
+          <div class="row" v-if="cardsInTable">
+            <div v-for="(card, index) in cardsInTable" v-bind:key="index">
+              <card
+                backgroundColor="bg-white"
+                textColor="text-black"
+                :text="card.text"
+              />
+            </div>
+          </div>
         </div>
 
         <div class="row col justify-end">
-          <div @click="buyCard(whiteCards[0])" v-show="whiteCards.length >= 1">
+          <div
+            @click="buyCard(whiteCards[0])"
+            v-show="whiteCards.length >= 1 && !isBossCurrentPlayer"
+          >
             <card
               :canHover="!isBossCurrentPlayer"
               :text="`Restantes ${whiteCards.length}`"
@@ -31,27 +47,18 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="row q-mt-md">
-        <div class="row col justify-center" v-if="cardsInTable">
-          <div v-for="(card, index) in cardsInTable" v-bind:key="index">
-            <card
-              backgroundColor="bg-white"
-              textColor="text-black"
-              :text="card.text"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div>
+    <div>
+      <q-separator v-show="!isBossCurrentPlayer" />
+      <div class="q-my-lg">
         <cards-in-hands
           :is-boss-current-player="isBossCurrentPlayer"
           :is-black-card-selected="isBlackCardSelected"
-          v-show="cardsInHands['cards']"
-          :cards="cardsInHands['cards']"
         />
       </div>
+
+      <q-separator v-show="!isBossCurrentPlayer" />
     </div>
   </div>
 </template>
@@ -83,7 +90,7 @@ export default {
       blackCards: [],
       whiteCards: [],
 
-      cardsInHands: {},
+      cards: {},
 
       blackCardSelected: null,
 
@@ -122,7 +129,8 @@ export default {
           case "load_cards_in_hands":
             response.data.info_players.forEach((element) => {
               if (element["player"]["id"] == this.currentPlayer.id) {
-                this.cardsInHands["cards"] = element["cards_in_hands"];
+                this.cards["cards"] = element["cards_in_hands"];
+                this.setCardsInHands(this.cards["cards"])
               }
             });
             this.whiteCards = response.data.white_cards;
@@ -135,7 +143,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable", "room"]),
+    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable", "room", "cardsInHands"]),
 
     isBossCurrentPlayer() {
       if (this.currentPlayer && this.bossRound) {
@@ -183,7 +191,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(["setBossRound", "setCardsInTable"]),
+    ...mapActions(["setBossRound", "setCardsInTable", "setCardsInHands"]),
 
     loadCardsInHands() {
       var data = {

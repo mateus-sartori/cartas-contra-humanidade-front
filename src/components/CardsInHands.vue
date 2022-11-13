@@ -1,15 +1,9 @@
 <template>
   <div>
-    <div class="row col justify-center items-center q-gutter-x-md" v-if="!isBossCurrentPlayer">
-      <q-btn
-        icon="chevron_left"
-        @click="previousCards()"
-        color="red"
-        round
-        :disabled="disablePrevious"
-        size="sm"
-        glossy
-      />
+    <div
+      class="row col justify-center items-center q-gutter-x-md"
+      v-if="!isBossCurrentPlayer"
+    >
       <div class="row" v-for="(card, index) in cardsInHands" v-bind:key="index">
         <div class="column justify-center items-center">
           <div @click="selectCard(card)">
@@ -17,13 +11,19 @@
               backgroundColor="bg-white"
               textColor="text-black"
               :text="card.text"
-              :style="blockCardHands || !isBlackCardSelected ? 'opacity: 0.7' : ''"
+              :style="
+                blockCardHands || !isBlackCardSelected ? 'opacity: 0.7' : ''
+              "
               :canHover="true"
             />
           </div>
           <div
             class="q-pa-xs row q-gutter-x-md"
-            v-if="selectedCardInHandsId == card.id && !blockCardHands && isBlackCardSelected"
+            v-if="
+              selectedCardInHandsId == card.id &&
+              !blockCardHands &&
+              isBlackCardSelected
+            "
           >
             <q-btn
               label="X"
@@ -42,15 +42,6 @@
           </div>
         </div>
       </div>
-      <q-btn
-        icon="chevron_right"
-        @click="nextCards()"
-        :disabled="disableForward"
-        color="green"
-        round
-        size="sm"
-        glossy
-      />
     </div>
   </div>
 </template>
@@ -70,13 +61,8 @@ export default {
       blockCardHands: false,
       selectedCardInHandsId: null,
 
-      showTotalCardsInHands: 5,
-      currentPage: 1,
-
       disableForward: false,
       disablePrevious: true,
-
-      cardsInHands: [],
 
       startGameChannel: "CartasContraHumanidadeGameRuleChannel",
     };
@@ -87,7 +73,7 @@ export default {
       received(response) {
         switch (response.action) {
           case "update_cards_in_table":
-            this.setCardsInTable(response.data)
+            this.setCardsInTable(response.data);
             break;
           default:
             break;
@@ -97,57 +83,27 @@ export default {
   },
 
   props: {
-    cards: {
-      type: Array,
-      default: null,
-    },
-
     isBossCurrentPlayer: {
-      type: Boolean
+      type: Boolean,
     },
 
     isBlackCardSelected: {
-      type: Boolean
-    }
+      type: Boolean,
+    },
   },
 
   computed: {
-    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable", "room"]),
-  },
-
-  watch: {
-    cards() {
-      this.cardsInHands = this.cards;
-      this.defaultCards();
-    }
+    ...mapGetters([
+      "bossRound",
+      "currentPlayer",
+      "cardsInTable",
+      "room",
+      "cardsInHands",
+    ]),
   },
 
   methods: {
-    ...mapActions(["setCardsInTable"]),
-
-    defaultCards() {
-      this.cardsInHands = this.cards.slice(0, this.showTotalCardsInHands);
-    },
-
-    nextCards() {
-      this.cardsInHands = this.cards.slice(
-        this.showTotalCardsInHands * this.currentPage,
-        this.showTotalCardsInHands * this.currentPage +
-          this.showTotalCardsInHands
-      );
-      this.currentPage++;
-      this.checkHandCards();
-    },
-
-    previousCards() {
-      this.currentPage--;
-      this.cardsInHands = this.cards.slice(
-        this.showTotalCardsInHands * this.currentPage -
-          this.showTotalCardsInHands,
-        this.showTotalCardsInHands * this.currentPage
-      );
-      this.checkHandCards();
-    },
+    ...mapActions(["setCardsInTable", "updateCardsInHands"]),
 
     selectCard(card) {
       if (this.bossRound.id == this.currentPlayer.id) {
@@ -163,8 +119,7 @@ export default {
         return;
       }
 
-      // TODO: Corrigir remoção da carta da mão.
-      this.cardsInHands = this.listRemoveByIndex(this.cards, card);
+      this.updateCardsInHands(card);
 
       this.broadcastTo(
         "update_cards_in_table",
@@ -173,41 +128,7 @@ export default {
         card
       );
 
-      this.updateCardsInHand();
-      this.checkHandCards();
-
       this.blockCardHands = true;
-    },
-
-    checkHandCards() {
-      if (this.currentPage == 2) {
-        this.disableForward = true;
-        this.disablePrevious = false;
-      } else {
-        this.disableForward = false;
-        this.disablePrevious = true;
-      }
-    },
-
-    updateCardsInHand() {
-      if (this.currentPage == 1) {
-        this.cardsInHands = this.cards.slice(0, 5);
-      } else {
-        this.cardsInHands = this.cards.slice(5, 10);
-      }
-    },
-
-    //helpers
-    listRemoveByIndex(array, item) {
-      const index = this.listfindIndex(array, item);
-      if (index > -1) {
-        array.splice(index, 1);
-        return array;
-      }
-    },
-
-    listfindIndex(array, item) {
-      return array.findIndex((_item) => _item.id === item.id);
     },
   },
 };
