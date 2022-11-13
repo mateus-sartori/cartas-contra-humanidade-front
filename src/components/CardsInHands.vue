@@ -14,7 +14,7 @@
               :style="
                 blockCardHands || !isBlackCardSelected ? 'opacity: 0.7' : ''
               "
-              :canHover="true"
+              :canHover="!blockCardHands"
             />
           </div>
           <div

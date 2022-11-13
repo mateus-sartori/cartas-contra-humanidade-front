@@ -10,7 +10,7 @@
         <q-item class="q-gutter-x-sm items-center">
           <div v-if="bossRound">
             <q-icon
-              name="star"
+              name="fa-solid fa-crown"
               v-if="bossRound.id == player.id"
               color="yellow-8"
               size="sm"

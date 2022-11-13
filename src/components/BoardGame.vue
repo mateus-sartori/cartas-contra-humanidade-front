@@ -30,11 +30,21 @@
                 <card
                   backgroundColor="bg-white"
                   textColor="text-black"
-                  :canHover="isBossCurrentPlayer"
+                  :canHover="isBossCurrentPlayer && !card.revealed"
                   :text="card.revealed ? card.text : ''"
                 />
               </div>
             </div>
+          </div>
+          <div
+            class="column justify-center"
+            v-if="
+              this.cardsInTable.length == 0 &&
+              blackCardSelected &&
+              isBossCurrentPlayer
+            "
+          >
+            Esperando jogadores enviarem suas cartas
           </div>
         </div>
 
