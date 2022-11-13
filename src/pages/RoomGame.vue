@@ -40,7 +40,6 @@
         <div class="col" v-if="isGameStared">
           <board-game
             :current-player="currentPlayer"
-            :room="room.id"
             :players="players"
           />
         </div>
@@ -161,7 +160,7 @@ export default {
           return room.id == this.room.id;
         });
         this.setRoom(room);
-        this.players = this.room["players"];
+        this.loadPlayersInRoom();
       }
     },
   },

@@ -8,7 +8,7 @@
               backgroundColor="bg-black"
               textColor="text-white"
               :canHover="
-                isBossCurrentPlayer && !blockNewBlackCard ? true : false
+                isBossCurrentPlayer && !isBlackCardSelected ? true : false
               "
               :text="`Restantes ${blackCards.length - 1}`"
             />
@@ -34,7 +34,6 @@
         </div>
       </div>
       <div class="row q-mt-md">
-        {{ cardsInTable }}
         <div class="row col justify-center" v-if="cardsInTable">
           <div v-for="(card, index) in cardsInTable" v-bind:key="index">
             <card
@@ -46,12 +45,10 @@
         </div>
       </div>
 
-      <div
-        v-if="
-          cardsInHands['cards'] && !isBossCurrentPlayer && blackCardSelected
-        "
-      >
+      <div>
         <cards-in-hands
+          :is-boss-current-player="isBossCurrentPlayer"
+          :is-black-card-selected="isBlackCardSelected"
           v-show="cardsInHands['cards']"
           :cards="cardsInHands['cards']"
         />
@@ -77,11 +74,7 @@ export default {
   props: {
     players: {
       type: Array,
-    },
-    room: {
-      type: String,
-      default: null,
-    },
+    }
   },
 
   data() {
@@ -98,7 +91,7 @@ export default {
       selectedCardInHandsId: null,
       isSelectingCardInHands: false,
       blockCardHands: false,
-      blockNewBlackCard: false,
+      isBlackCardSelected: false,
       isPendingLeaderStart: true,
 
       player: null,
@@ -143,7 +136,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable"]),
+    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable", "room"]),
 
     isBossCurrentPlayer() {
       if (this.currentPlayer && this.bossRound) {
@@ -167,17 +160,17 @@ export default {
         this.broadcastTo(
           "load_black_cards",
           this.startGameChannel,
-          this.room
+          this.room.id
         );
         this.broadcastTo(
           "load_white_cards",
           this.startGameChannel,
-          this.room
+          this.room.id
         );
         this.broadcastTo(
           "boss_round",
           this.startGameChannel,
-          this.room,
+          this.room.id,
           data
         );
 
@@ -200,7 +193,7 @@ export default {
       this.broadcastTo(
         "load_cards_in_hands",
         this.startGameChannel,
-        this.room,
+        this.room.id,
         data
       );
     },
@@ -210,7 +203,7 @@ export default {
         this.broadcastTo(
           "play_black_card",
           this.startGameChannel,
-          this.room,
+          this.room.id,
           {
             selectedBlackCard: this.randomElement(this.blackCards),
           }
@@ -219,10 +212,10 @@ export default {
     },
 
     nextBlackCard(selectedBlackCard) {
-      if (this.blackCards.length > 1 && !this.blockNewBlackCard) {
+      if (this.blackCards.length > 1 && !this.isBlackCardSelected) {
         this.blackCards.shift();
         this.blackCardSelected = selectedBlackCard;
-        this.blockNewBlackCard = true;
+        this.isBlackCardSelected = true;
         this.resetRound();
       }
     },

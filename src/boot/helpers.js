@@ -2,13 +2,13 @@ import Vue from "vue";
 
 Vue.mixin({
   methods: {
-    broadcastTo(action, channel, session, data=null) {
+    broadcastTo(action, channel, room, data=null) {
       this.$cable.perform({
         channel: channel,
         action: action,
         data: {
           ...data,
-          session: session,
+          session: room,
         },
       });
     },

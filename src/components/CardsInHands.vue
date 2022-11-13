@@ -1,7 +1,8 @@
 <template>
   <div>
+    {{isBlackCardSelected}}
     <!-- Cartas da mão  -->
-    <div class="row col justify-center items-center q-gutter-x-md">
+    <div class="row col justify-center items-center q-gutter-x-md" v-if="!isBossCurrentPlayer">
       <q-btn
         icon="chevron_left"
         @click="previousCards()"
@@ -18,13 +19,13 @@
               backgroundColor="bg-white"
               textColor="text-black"
               :text="card.text"
-              :style="blockCardHands ? 'opacity: 0.7' : ''"
+              :style="blockCardHands || !isBlackCardSelected ? 'opacity: 0.7' : ''"
               :canHover="true"
             />
           </div>
           <div
             class="q-pa-xs row q-gutter-x-md"
-            v-if="selectedCardInHandsId == card.id && !blockCardHands"
+            v-if="selectedCardInHandsId == card.id && !blockCardHands && isBlackCardSelected"
           >
             <q-btn
               label="X"
@@ -88,6 +89,7 @@ export default {
       received(response) {
         switch (response.action) {
           case "update_cards_in_table":
+            this.setCardsInTable(response.data)
             break;
           default:
             break;
@@ -101,14 +103,22 @@ export default {
       type: Array,
       default: null,
     },
+
+    isBossCurrentPlayer: {
+      type: Boolean
+    },
+
+    isBlackCardSelected: {
+      type: Boolean
+    }
   },
 
   computed: {
-    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable"]),
+    ...mapGetters(["bossRound", "currentPlayer", "cardsInTable", "room"]),
   },
 
-  created() {
-    if (this.cards) {
+  watch: {
+    cards() {
       this.cardsInHands = this.cards;
       this.defaultCards();
     }
@@ -149,7 +159,6 @@ export default {
     },
 
     playCard(card) {
-      console.log(card);
       this.selectedCardInHandsId = null;
 
       if (this.blockCardHands) {
@@ -161,11 +170,9 @@ export default {
       this.broadcastTo(
         "update_cards_in_table",
         this.startGameChannel,
-        this.session,
-        data
+        this.room.id,
+        card
       );
-
-      this.setCardsInTable(card);
 
       this.updateCardsInHand();
       this.checkHandCards();

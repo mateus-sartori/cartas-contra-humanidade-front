@@ -27,7 +27,6 @@
             Total de Jogadores: {{ room.players.length }}/6
           </div>
           <div>
-            {{ room }}
             <q-btn
               v-if="room.status != 'started'"
               label="Entrar na sala"
