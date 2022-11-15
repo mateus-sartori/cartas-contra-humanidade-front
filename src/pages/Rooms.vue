@@ -123,6 +123,14 @@ export default {
         host: this.currentPlayer.id,
         hostName: this.currentPlayer.name,
         id: room,
+        players: null,
+        isAllPlayersPlayed: null,
+        winnerPlayer: {
+          id: null,
+          name: null,
+          card: null,
+          reveal: false,
+        },
       };
 
       this.setRoom(roomInfo);

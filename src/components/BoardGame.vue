@@ -26,7 +26,7 @@
           </div>
           <div class="row" v-if="cardsInTable">
             <div v-for="(card, index) in cardsInTable" v-bind:key="index">
-              <div @click="revealCard(card)">
+              <div @click="handleCardInTable(card)">
                 <card
                   backgroundColor="bg-white"
                   textColor="text-black"
@@ -34,6 +34,12 @@
                   :text="card.revealed ? card.text : ''"
                 />
               </div>
+            </div>
+            <div
+              class="self-center"
+              v-if="!isBossCurrentPlayer && !blackCardSelected"
+            >
+              Aguardando carta do patrão...
             </div>
           </div>
           <div
@@ -44,7 +50,7 @@
               isBossCurrentPlayer
             "
           >
-            Esperando jogadores enviarem suas cartas
+            Esperando jogadores enviarem suas cartas...
           </div>
         </div>
 
@@ -73,12 +79,25 @@
 
       <q-separator v-show="!isBossCurrentPlayer" />
     </div>
+
+    <q-dialog v-model="showWinnerPlayer">
+      <q-card v-if="room.winnerPlayer">
+        <q-card-section>
+          <div class="text-h6">Vencedor: {{room.winnerPlayer.name}}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          {{ room.winnerPlayer.card.text }}
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
 <script>
 import Card from "components/Card";
 import CardsInHands from "components/CardsInHands.vue";
+import { Notify } from "quasar";
 
 import { mapGetters, mapActions } from "vuex";
 
@@ -117,6 +136,8 @@ export default {
 
       playersInSession: [],
 
+      showWinnerPlayer: false,
+
       cartasContraHumanidadeConnection: false,
 
       startGameChannel: "CartasContraHumanidadeGameRuleChannel",
@@ -150,6 +171,22 @@ export default {
             break;
           case "reveal_card_in_table":
             this.updateCardsInTable(response.data);
+            break;
+          case "update_room":
+            this.updateRoom(response.data);
+            break;
+          case "winner_player":
+            this.setWinnerPlayer(response.data);
+            if (response.data.reveal) {
+              this.showWinnerPlayer = true;
+              setTimeout(() => {
+                this.showWinnerPlayer = false;
+                this.setWinnerPlayer(null);
+                this.resetRoom();
+                this.resetRound();
+              }, 5000);
+            }
+            break;
           default:
             break;
         }
@@ -171,6 +208,28 @@ export default {
         return this.currentPlayer.id === this.bossRound.id;
       }
       return false;
+    },
+
+    isAllCardsInTableRevealed() {
+      return this.cardsInTable.every((card) => {
+        return card.revealed;
+      });
+    },
+  },
+
+  watch: {
+    room() {
+      if (this.room.isAllPlayersPlayed && !this.isBossCurrentPlayer) {
+        setTimeout(() => {
+          Notify.create({
+            progress: true,
+            message: "Patrão revelando cartas...",
+            icon: "fa-solid fa-hand-pointer",
+            color: "black",
+            textColor: "white",
+          });
+        }, 2000);
+      }
     },
   },
 
@@ -217,6 +276,10 @@ export default {
       "setCardsInTable",
       "setCardsInHands",
       "updateCardsInTable",
+      "setCurrentPlayer",
+      "updateRoom",
+      "resetRoom",
+      "setWinnerPlayer",
     ]),
 
     loadCardsInHands() {
@@ -241,6 +304,18 @@ export default {
             selectedBlackCard: this.randomElement(this.blackCards),
           }
         );
+
+        var data = {
+          players: this.room["players"],
+          currentPlayer: this.currentPlayer,
+        };
+
+        this.broadcastTo(
+          "update_room",
+          this.startGameChannel,
+          this.room.id,
+          data
+        );
       }
     },
 
@@ -251,6 +326,13 @@ export default {
         this.isBlackCardSelected = true;
         this.resetRound();
       }
+    },
+
+    handleCardInTable(card) {
+      if (this.room.isAllPlayersPlayed && !this.isAllCardsInTableRevealed)
+        return this.revealCard(card);
+      if (this.isAllCardsInTableRevealed)
+        return this.selectWinnerWhiteCard(card);
     },
 
     revealCard(card) {
@@ -265,6 +347,24 @@ export default {
           this.startGameChannel,
           this.room.id,
           data
+        );
+      }
+    },
+
+    selectWinnerWhiteCard(card) {
+      if (this.isBossCurrentPlayer) {
+        const player = this.room.players.find((player) => {
+          if (player.referralCard) {
+            return player.referralCard.text == card.text;
+          }
+          return false;
+        });
+
+        this.broadcastTo(
+          "winner_player",
+          this.startGameChannel,
+          this.room.id,
+          player
         );
       }
     },

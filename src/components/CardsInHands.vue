@@ -6,7 +6,7 @@
     >
       <div class="row" v-for="(card, index) in cardsInHands" v-bind:key="index">
         <div class="column justify-center items-center">
-          <div @click="selectCard(card)">
+          <div @dblclick="playCard(card)">
             <card
               backgroundColor="bg-white"
               textColor="text-black"
@@ -15,29 +15,6 @@
                 blockCardHands || !isBlackCardSelected ? 'opacity: 0.7' : ''
               "
               :canHover="!blockCardHands"
-            />
-          </div>
-          <div
-            class="q-pa-xs row q-gutter-x-md"
-            v-if="
-              selectedCardInHandsId == card.id &&
-              !blockCardHands &&
-              isBlackCardSelected
-            "
-          >
-            <q-btn
-              label="X"
-              size="xs"
-              color="red-8"
-              @click="cancelCard()"
-              glossy
-            />
-            <q-btn
-              label="Jogar"
-              size="sm"
-              glossy
-              color="green"
-              @click="playCard(card)"
             />
           </div>
         </div>
@@ -105,30 +82,40 @@ export default {
   methods: {
     ...mapActions(["setCardsInTable", "updateCardsInHands"]),
 
-    selectCard(card) {
-      if (this.bossRound.id == this.currentPlayer.id) {
-        return;
-      }
-      this.selectedCardInHandsId = card.id;
-    },
-
     playCard(card) {
-      this.selectedCardInHandsId = null;
+      if (this.isBlackCardSelected) {
+        this.selectedCardInHandsId = null;
 
-      if (this.blockCardHands) {
-        return;
+        if (this.blockCardHands) {
+          return;
+        }
+
+        this.updateCardsInHands(card);
+
+        this.broadcastTo(
+          "update_cards_in_table",
+          this.startGameChannel,
+          this.room.id,
+          card
+        );
+
+        var data = {};
+
+        data = {
+          players: this.room["players"],
+          currentPlayer: this.currentPlayer,
+          card: card,
+        };
+
+        this.broadcastTo(
+          "update_room",
+          this.startGameChannel,
+          this.room.id,
+          data
+        );
+
+        this.blockCardHands = true;
       }
-
-      this.updateCardsInHands(card);
-
-      this.broadcastTo(
-        "update_cards_in_table",
-        this.startGameChannel,
-        this.room.id,
-        card
-      );
-
-      this.blockCardHands = true;
     },
   },
 };

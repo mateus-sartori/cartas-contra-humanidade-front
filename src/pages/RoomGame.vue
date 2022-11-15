@@ -83,6 +83,13 @@ export default {
                 this.setSessionStatus(response.status);
                 this.isGameStared = true;
               }
+
+              var currentPlayer = {
+                ...this.currentPlayer,
+                pending: true
+              }
+              
+              this.setCurrentPlayer(currentPlayer)
             }
             break;
           default:
@@ -158,6 +165,8 @@ export default {
       "setBossRound",
       "setSessionStatus",
       "setCardsInTable",
+      "setCurrentPlayer",
+      "setRoundStatus"
     ]),
 
     startGame(room_id) {

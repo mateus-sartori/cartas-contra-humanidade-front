@@ -6,11 +6,11 @@
       } ${backgroundColor} text-bold q-ma-xs`"
       bordered
       flat
-      style="width: 130px"
+      style="width: 160px"
     >
       <div>
         <div class="q-pa-sm row items-center">
-          <div style="word-wrap: break-word; height: 120px" :class="textColor">
+          <div style="word-wrap: break-word; height: 150px" :class="textColor">
             <div v-if="text">
               <span :style="text.length >= 40 ? 'font-size: 11px' : ''">
                 {{ text }}
@@ -18,12 +18,12 @@
             </div>
           </div>
         </div>
-        <q-separator />
-        <div :class="`${backgroundColor} text-bold`">
-          <q-card-section class="q-pa-xs" :class="textColor">
-            <span style="font-size: 9px"> Cartas contra humanidade </span>
-          </q-card-section>
-        </div>
+      </div>
+      <q-separator />
+      <div :class="`${backgroundColor} text-bold`">
+        <q-card-section class="q-pa-xs" :class="textColor">
+          <span style="font-size: 9px"> Cartas contra humanidade </span>
+        </q-card-section>
       </div>
     </q-card>
   </div>
@@ -32,12 +32,7 @@
 <script>
 export default {
   name: "Card",
-  props: [
-    "backgroundColor",
-    "textColor",
-    "text",
-    "canHover",
-  ],
+  props: ["backgroundColor", "textColor", "text", "canHover"],
 
   data() {
     return {};

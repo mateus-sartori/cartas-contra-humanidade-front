@@ -60,6 +60,7 @@ export default {
       var player = {
         id: this.session,
         name: this.form.name,
+        pending: true
       };
 
       this.setCurrentPlayer(player)

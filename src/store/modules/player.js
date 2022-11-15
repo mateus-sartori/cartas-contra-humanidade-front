@@ -20,6 +20,8 @@ const actions = {
     commit("SET_CURRENT_PLAYER", payload);
   },
 
+  // Cards in Hands
+
   setCardsInHands({ commit }, payload) {
     commit("SET_CARDS_IN_HANDS", payload);
   },
@@ -31,10 +33,12 @@ const actions = {
 
 const mutations = {
   SET_CURRENT_PLAYER: (state, payload) => (state.currentPlayer = payload),
+
+  // Cards in Hands
   SET_CARDS_IN_HANDS: (state, payload) => (state.cardsInHands = payload),
   UPDATE_CARDS_IN_HANDS: (state, payload) => {
     state.cardsInHands = removeCardInHands(state.cardsInHands, payload);
-  },
+  }
 };
 
 export default {
