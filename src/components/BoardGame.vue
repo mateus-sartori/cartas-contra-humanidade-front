@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="q-my-xl">
-      <div class="row">
+      <div class="row col-12">
         <div class="col-12 row justify-center" v-if="blackCards">
           <div
             @click="playBlackCard()"
@@ -36,25 +36,28 @@
               </div>
             </div>
             <div
-              class="self-center"
+              class="self-center text-caption"
               v-if="!isBossCurrentPlayer && !blackCard.card"
             >
               Aguardando carta do patrão...
             </div>
           </div>
-          <div
-            class="column justify-center"
-            v-if="
-              this.cardsInTable.length == 0 &&
-              blackCard.card &&
-              isBossCurrentPlayer
-            "
-          >
-            Esperando jogadores enviarem suas cartas...
+        </div>
+
+        <div
+          class="col-12 row justify-center"
+          v-if="
+            this.cardsInTable.length == 0 &&
+            blackCard.card &&
+            isBossCurrentPlayer
+          "
+        >
+          <div class="q-my-md text-caption">
+            Esperando jogadores enviarem as cartas...
           </div>
         </div>
 
-        <div class="row col justify-end">
+        <div class="row col justify-end" v-if="!isBossCurrentPlayer">
           <div
             @click="buyCard(whiteCards[0])"
             v-show="whiteCards.length >= 1 && !isBossCurrentPlayer"
@@ -147,8 +150,42 @@ export default {
           case "reveal_card_in_table":
             this.updateCardsInTable(response.data);
             break;
+          case "shuffle_cards_in_table":
+            this.updateCardsInTable(response.data);
+            break;
           case "update_room":
             this.updateRoom(response.data);
+            if (this.room.isAllPlayersPlayed && !this.isBossCurrentPlayer) {
+              setTimeout(() => {
+                Notify.create({
+                  progress: true,
+                  message: "Patrão revelando cartas...",
+                  icon: "fa-solid fa-hand-pointer",
+                  color: "black",
+                  textColor: "white",
+                });
+              }, 1500);
+            }
+
+            if (this.room.isAllPlayersPlayed) {
+              Notify.create({
+                progress: true,
+                message: "Embaralhando cartas...",
+                icon: "fa-solid fa-hand-pointer",
+                color: "black",
+                textColor: "white",
+              });
+
+              const data = {
+                cardsInTable: this.cardsInTable,
+              };
+              this.broadcastTo(
+                "shuffle_cards_in_table",
+                this.startGameChannel,
+                this.room.id,
+                data
+              );
+            }
             break;
           case "winner_player":
             this.setWinnerPlayer(response.data);
@@ -170,6 +207,7 @@ export default {
                 this.resetRound();
                 this.updateBlockCardsHands(false);
                 this.setblackCard({ card: null, selected: false });
+                this.updateBlockSelectWinner(false);
               }, 5000);
             }
             break;
@@ -190,6 +228,7 @@ export default {
       "cardsInHands",
       "blackCards",
       "blackCard",
+      "blockSelectWinner",
     ]),
 
     isBossCurrentPlayer() {
@@ -203,22 +242,6 @@ export default {
       return this.cardsInTable.every((card) => {
         return card.revealed;
       });
-    },
-  },
-
-  watch: {
-    room() {
-      if (this.room.isAllPlayersPlayed && !this.isBossCurrentPlayer) {
-        setTimeout(() => {
-          Notify.create({
-            progress: true,
-            message: "Patrão revelando cartas...",
-            icon: "fa-solid fa-hand-pointer",
-            color: "black",
-            textColor: "white",
-          });
-        }, 2000);
-      }
     },
   },
 
@@ -275,7 +298,8 @@ export default {
       "setBlackCards",
       "setblackCard",
       "removeSelectedCardFromBlackCards",
-      "updateCurrentBossIndex"
+      "updateCurrentBossIndex",
+      "updateBlockSelectWinner",
     ]),
 
     loadCardsInHands() {
@@ -348,7 +372,7 @@ export default {
     },
 
     selectWinnerWhiteCard(card) {
-      if (this.isBossCurrentPlayer) {
+      if (!this.blockSelectWinner && this.isBossCurrentPlayer) {
         const player = this.room.players.find((player) => {
           if (player.referralCard) {
             return player.referralCard.text == card.text;
@@ -362,6 +386,7 @@ export default {
           this.room.id,
           player
         );
+        this.updateBlockSelectWinner(true);
       }
     },
 
