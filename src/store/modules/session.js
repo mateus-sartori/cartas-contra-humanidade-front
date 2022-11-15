@@ -29,7 +29,7 @@ const actions = {
     commit("SET_SESSION_STATUS", payload);
   },
 
-  // ROOM 
+  // ROOM
   setRoom({ commit }, payload) {
     commit("SET_ROOM", payload);
   },
@@ -63,8 +63,7 @@ const mutations = {
 
   RESET_ROOM: (state, payload) => {
     state.room.players = state.room.players.map((player) => {
-      player.pending = true
-      player.score += 1 
+      player.pending = true;
       return player;
     });
     state.room.isAllPlayersPlayed = false;
@@ -72,10 +71,13 @@ const mutations = {
 
   SET_WINNER_PLAYER: (state, payload) => {
     state.room.players.map((player) => {
-      if (player.id == payload.id) {
-        player.score += 1
+      if (player && payload) {
+        if (player.id == payload.id) {
+          if (!player.score) player.score = 1
+          else player.score += 1 
+        }
       }
-    })
+    });
     state.room.winnerPlayer = payload;
   },
 };

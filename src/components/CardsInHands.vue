@@ -12,7 +12,7 @@
               textColor="text-black"
               :text="card.text"
               :style="
-                blockCardHands || !isBlackCardSelected ? 'opacity: 0.7' : ''
+                blockCardHands || !blackCard.card ? 'opacity: 0.7' : ''
               "
               :canHover="!blockCardHands"
             />
@@ -35,7 +35,6 @@ export default {
 
   data() {
     return {
-      blockCardHands: false,
       selectedCardInHandsId: null,
 
       disableForward: false,
@@ -62,11 +61,7 @@ export default {
   props: {
     isBossCurrentPlayer: {
       type: Boolean,
-    },
-
-    isBlackCardSelected: {
-      type: Boolean,
-    },
+    }
   },
 
   computed: {
@@ -76,14 +71,16 @@ export default {
       "cardsInTable",
       "room",
       "cardsInHands",
+      "blockCardHands",
+      "blackCard"
     ]),
   },
 
   methods: {
-    ...mapActions(["setCardsInTable", "updateCardsInHands"]),
+    ...mapActions(["setCardsInTable", "updateCardsInHands", "updateBlockCardsHands"]),
 
     playCard(card) {
-      if (this.isBlackCardSelected) {
+      if (this.blackCard.card) {
         this.selectedCardInHandsId = null;
 
         if (this.blockCardHands) {
@@ -114,7 +111,7 @@ export default {
           data
         );
 
-        this.blockCardHands = true;
+        this.updateBlockCardsHands(true)
       }
     },
   },

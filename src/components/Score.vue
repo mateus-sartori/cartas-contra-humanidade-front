@@ -2,11 +2,12 @@
   <div>
     <div style="width: 200px;">
       <q-list
-        dense
-        style="position: relative"
-        v-for="(player, index) in players"
-        v-bind:key="index"
+      dense
+      style="position: relative"
+      v-for="(player, index) in players"
+      v-bind:key="index"
       >
+      
         <div>
           <q-item class="q-gutter-x-sm items-center">
             <div v-if="bossRound" class="cursor-pointer">
@@ -28,9 +29,9 @@
                 <q-icon name="done" color="green-8" size="sm" />
               </div>
             </div>
-            <q-badge class="score" color="black"> 0 </q-badge>
+            <q-badge class="score" color="black"> {{player.score ? player.score : 0}} </q-badge>
             <q-item-section>
-              <span class="text-h6">{{ player.name }}</span>
+              <span class="text-caption">{{ player.name }}</span>
             </q-item-section>
           </q-item>
         </div>

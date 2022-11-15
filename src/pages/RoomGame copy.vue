@@ -31,11 +31,11 @@
                   :text="`Restantes ${blackCards.length - 1}`"
                 />
               </div>
-              <div v-if="blackCardSelected && !isPendingLeaderStart">
+              <div v-if="blackCard && !isPendingLeaderStart">
                 <card
                   backgroundColor="bg-black"
                   textColor="text-white"
-                  :text="blackCardSelected.text"
+                  :text="blackCard.text"
                 />
               </div>
             </div>
@@ -162,7 +162,7 @@ export default {
   data() {
     return {
       showTotalCardsInHands: 5,
-      blackCardSelectedPosition: 0,
+      blackCardPosition: 0,
       currentPage: 1,
 
       blackCards: [
@@ -196,7 +196,7 @@ export default {
         },
       ],
 
-      blackCardSelected: null,
+      blackCard: null,
 
       disableForward: false,
       disablePrevious: true,
@@ -277,7 +277,7 @@ export default {
         !this.blockNewBlackCard
       ) {
         this.blackCards.shift();
-        this.blackCardSelected = this.blackCards[0];
+        this.blackCard = this.blackCards[0];
         this.blockNewBlackCard = true;
         this.resetRound();
       }

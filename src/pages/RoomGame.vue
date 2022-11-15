@@ -10,10 +10,10 @@
           </div>
           <div class="q-mt-md" v-if="!isGameStared && playerIsHost">
             <q-btn
-            label="Começar game"
-            color="red-8"
-            no-caps
-            @click="startGame(room.id)"
+              label="Começar game"
+              color="red-8"
+              no-caps
+              @click="startGame(room.id)"
             />
           </div>
           <span class="text-h6" v-if="bossRound">
@@ -43,7 +43,7 @@ export default {
 
   components: {
     BoardGame,
-    Score
+    Score,
   },
   data() {
     return {
@@ -86,10 +86,14 @@ export default {
 
               var currentPlayer = {
                 ...this.currentPlayer,
-                pending: true
+                pending: true,
+              };
+
+              this.setCurrentPlayer(currentPlayer);
+              if (this.bossRound && this.currentPlayer) {
+                const isBoss = this.bossRound.id == this.currentPlayer.id;
+                this.setIsCurrentBoss(isBoss);
               }
-              
-              this.setCurrentPlayer(currentPlayer)
             }
             break;
           default:
@@ -100,7 +104,13 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["session", "room", "bossRound", "currentPlayer"]),
+    ...mapGetters([
+      "session",
+      "room",
+      "bossRound",
+      "currentPlayer",
+      "isCurrentBoss",
+    ]),
 
     playerIsHost() {
       if (this.room && this.currentPlayer) {
@@ -166,7 +176,8 @@ export default {
       "setSessionStatus",
       "setCardsInTable",
       "setCurrentPlayer",
-      "setRoundStatus"
+      "setRoundStatus",
+      "setIsCurrentBoss",
     ]),
 
     startGame(room_id) {
@@ -179,6 +190,7 @@ export default {
             status: "started",
           },
         });
+
         const bossRound =
           this.players[Math.floor(Math.random() * this.players.length)];
         this.setBossRound(bossRound);

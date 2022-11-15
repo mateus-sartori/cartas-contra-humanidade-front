@@ -11,17 +11,17 @@
               backgroundColor="bg-black"
               textColor="text-white"
               :canHover="
-                isBossCurrentPlayer && !isBlackCardSelected ? true : false
+                isBossCurrentPlayer && !blackCard.selected ? true : false
               "
               :text="`Restantes ${blackCards.length - 1}`"
             />
           </div>
 
-          <div v-if="blackCardSelected">
+          <div v-if="blackCard.selected">
             <card
               backgroundColor="bg-black"
               textColor="text-white"
-              :text="blackCardSelected.text"
+              :text="blackCard.card.text"
             />
           </div>
           <div class="row" v-if="cardsInTable">
@@ -30,14 +30,14 @@
                 <card
                   backgroundColor="bg-white"
                   textColor="text-black"
-                  :canHover="isBossCurrentPlayer && !card.revealed"
+                  :canHover="isBossCurrentPlayer"
                   :text="card.revealed ? card.text : ''"
                 />
               </div>
             </div>
             <div
               class="self-center"
-              v-if="!isBossCurrentPlayer && !blackCardSelected"
+              v-if="!isBossCurrentPlayer && !blackCard.card"
             >
               Aguardando carta do patrão...
             </div>
@@ -46,7 +46,7 @@
             class="column justify-center"
             v-if="
               this.cardsInTable.length == 0 &&
-              blackCardSelected &&
+              blackCard.card &&
               isBossCurrentPlayer
             "
           >
@@ -71,10 +71,7 @@
     <div>
       <q-separator v-show="!isBossCurrentPlayer" />
       <div class="q-my-lg">
-        <cards-in-hands
-          :is-boss-current-player="isBossCurrentPlayer"
-          :is-black-card-selected="isBlackCardSelected"
-        />
+        <cards-in-hands :is-boss-current-player="isBossCurrentPlayer" />
       </div>
 
       <q-separator v-show="!isBossCurrentPlayer" />
@@ -83,7 +80,7 @@
     <q-dialog v-model="showWinnerPlayer">
       <q-card v-if="room.winnerPlayer">
         <q-card-section>
-          <div class="text-h6">Vencedor: {{room.winnerPlayer.name}}</div>
+          <div class="text-h6">Vencedor: {{ room.winnerPlayer.name }}</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -117,28 +114,7 @@ export default {
 
   data() {
     return {
-      blackCardSelectedPosition: 0,
-
-      blackCards: [],
-      whiteCards: [],
-
-      cards: {},
-
-      blackCardSelected: null,
-
-      selectedCardInHandsId: null,
-      isSelectingCardInHands: false,
-      blockCardHands: false,
-      isBlackCardSelected: false,
-      isPendingLeaderStart: true,
-
-      player: null,
-
-      playersInSession: [],
-
       showWinnerPlayer: false,
-
-      cartasContraHumanidadeConnection: false,
 
       startGameChannel: "CartasContraHumanidadeGameRuleChannel",
     };
@@ -149,7 +125,7 @@ export default {
       received(response) {
         switch (response.action) {
           case "load_black_cards":
-            this.blackCards = response.data;
+            this.setBlackCards(response.data);
             break;
           case "play_black_card":
             this.nextBlackCard(response.data);
@@ -158,16 +134,15 @@ export default {
             this.setBossRound(response.data);
             break;
           case "load_white_cards":
-            this.whiteCards = response.data;
+            this.setWhiteCards(response.data);
             break;
           case "load_cards_in_hands":
             response.data.info_players.forEach((element) => {
               if (element["player"]["id"] == this.currentPlayer.id) {
-                this.cards["cards"] = element["cards_in_hands"];
-                this.setCardsInHands(this.cards["cards"]);
+                this.setCardsInHands(element["cards_in_hands"]);
               }
             });
-            this.whiteCards = response.data.white_cards;
+            this.setWhiteCards(response.data.white_cards);
             break;
           case "reveal_card_in_table":
             this.updateCardsInTable(response.data);
@@ -181,9 +156,20 @@ export default {
               this.showWinnerPlayer = true;
               setTimeout(() => {
                 this.showWinnerPlayer = false;
+                this.updateCurrentBossIndex({
+                  players: this.players,
+                  currentBoss: this.bossRound,
+                });
+                this.updateBossRound({
+                  isBossCurrentPlayer: this.isBossCurrentPlayer,
+                  players: this.players,
+                });
                 this.setWinnerPlayer(null);
+                this.updateCardsInTable([]);
                 this.resetRoom();
                 this.resetRound();
+                this.updateBlockCardsHands(false);
+                this.setblackCard({ card: null, selected: false });
               }, 5000);
             }
             break;
@@ -198,9 +184,12 @@ export default {
     ...mapGetters([
       "bossRound",
       "currentPlayer",
+      "whiteCards",
       "cardsInTable",
       "room",
       "cardsInHands",
+      "blackCards",
+      "blackCard",
     ]),
 
     isBossCurrentPlayer() {
@@ -273,13 +262,20 @@ export default {
   methods: {
     ...mapActions([
       "setBossRound",
+      "updateBossRound",
       "setCardsInTable",
       "setCardsInHands",
+      "setWhiteCards",
       "updateCardsInTable",
       "setCurrentPlayer",
       "updateRoom",
       "resetRoom",
       "setWinnerPlayer",
+      "updateBlockCardsHands",
+      "setBlackCards",
+      "setblackCard",
+      "removeSelectedCardFromBlackCards",
+      "updateCurrentBossIndex"
     ]),
 
     loadCardsInHands() {
@@ -301,7 +297,7 @@ export default {
           this.startGameChannel,
           this.room.id,
           {
-            selectedBlackCard: this.randomElement(this.blackCards),
+            blackCard: this.randomElement(this.blackCards),
           }
         );
 
@@ -319,11 +315,11 @@ export default {
       }
     },
 
-    nextBlackCard(selectedBlackCard) {
-      if (this.blackCards.length > 1 && !this.isBlackCardSelected) {
-        this.blackCards.shift();
-        this.blackCardSelected = selectedBlackCard;
-        this.isBlackCardSelected = true;
+    nextBlackCard(blackCard) {
+      if (this.blackCards.length > 1 && !this.blackCard.card) {
+        this.removeSelectedCardFromBlackCards(blackCard);
+
+        this.setblackCard({ card: blackCard, selected: true });
         this.resetRound();
       }
     },
@@ -370,9 +366,6 @@ export default {
     },
 
     resetRound() {
-      this.blockCardHands = false;
-      this.selectedCardInHandsId = null;
-
       this.setCardsInTable([]);
     },
   },
