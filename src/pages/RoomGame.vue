@@ -17,7 +17,11 @@
             />
           </div>
           <span class="text-h6" v-if="bossRound">
-            Patrão da rodada: <b>{{ bossRound.name }}</b>
+            <b>{{
+              bossRound.id === currentPlayer.id
+                ? "Você é o patrão"
+                : `Patrão da rodada: ${bossRound.name}`
+            }}</b>
           </span>
         </div>
       </div>

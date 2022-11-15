@@ -83,6 +83,7 @@ const mutations = {
     if (payload.length == 0) return (state.cardsInTable = []);
     if (payload) state.cardsInTable.push(payload);
   },
+
   UPDATE_CARDS_IN_TABLE: (state, payload) => {
     if (payload) state.cardsInTable = payload;
   },
