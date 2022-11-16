@@ -46,6 +46,14 @@ export default {
      ...mapGetters(["session"]),
   },
 
+  created() {
+      // Temporario
+      var Chance = require('chance');
+      var chance = new Chance();
+
+      this.form.name = chance.name()
+  },
+
   methods: {
     ...mapActions(['setCurrentPlayer']),
 

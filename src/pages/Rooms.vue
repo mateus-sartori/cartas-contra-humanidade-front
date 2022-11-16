@@ -28,7 +28,7 @@
           </div>
           <div>
             <q-btn
-              v-if="room.status != 'started'"
+              v-if="room.status != 'started' && room.players.length <= 5"
               label="Entrar na sala"
               no-caps
               glossy
@@ -36,11 +36,18 @@
               color="green-7"
             />
             <q-btn
-              v-else
+              v-else-if="room.status == 'started'"
               label="Jogo em andamento..."
               no-caps
               disabled
               color="red-7"
+            />
+            <q-btn
+              v-else
+              label="Sala cheia"
+              no-caps
+              glossy
+              color="grey-7"
             />
           </div>
         </q-card>

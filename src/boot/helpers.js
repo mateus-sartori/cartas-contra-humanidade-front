@@ -2,7 +2,7 @@ import Vue from "vue";
 
 Vue.mixin({
   methods: {
-    broadcastTo(action, channel, room, data=null) {
+    broadcastTo(action, channel, room, data = null) {
       this.$cable.perform({
         channel: channel,
         action: action,

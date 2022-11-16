@@ -1,3 +1,10 @@
+//helpers
+function shiftWhiteCard(array, item) {
+  return array.filter((element) => {
+    return element.text != item.text;
+  });
+}
+
 const state = {
   bossRound: null,
   currentBossIndex: null,
@@ -44,6 +51,10 @@ const actions = {
     commit("UPDATE_CARDS_IN_TABLE", payload);
   },
 
+  shiftCardsToBuy({commit}, payload) {
+    commit('SHIFT_CARDS_TO_BUY', payload) 
+  },
+
   setBlackCards({ commit }, payload) {
     commit("SET_BLACK_CARDS", payload);
   },
@@ -86,6 +97,10 @@ const mutations = {
 
   UPDATE_CARDS_IN_TABLE: (state, payload) => {
     if (payload) state.cardsInTable = payload;
+  },
+
+  SHIFT_CARDS_TO_BUY: (state, payload) => {
+    if (payload) state.whiteCards = shiftWhiteCard(state.whiteCards, payload);
   },
 
   SET_BLACK_CARDS: (state, payload) => (state.blackCards = payload),

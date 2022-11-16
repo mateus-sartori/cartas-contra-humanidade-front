@@ -18,7 +18,7 @@ const getters = {
   cardsInHands: (state) => state.cardsInHands,
   blockCardHands: (state) => state.blockCardHands,
   isCurrentBoss: (state) => state.isCurrentBoss,
-  blockSelectWinner: (state) => state.blockSelectWinner
+  blockSelectWinner: (state) => state.blockSelectWinner,
 };
 
 const actions = {
@@ -52,11 +52,13 @@ const actions = {
 const mutations = {
   SET_CURRENT_PLAYER: (state, payload) => (state.currentPlayer = payload),
   SET_IS_CURRENT_BOSS: (state, payload) => (state.isCurrentBoss = payload),
-
   // Cards in Hands
   SET_CARDS_IN_HANDS: (state, payload) => (state.cardsInHands = payload),
   UPDATE_CARDS_IN_HANDS: (state, payload) => {
-    state.cardsInHands = removeCardInHands(state.cardsInHands, payload);
+    if (payload.action == "remove")
+      state.cardsInHands = removeCardInHands(state.cardsInHands, payload.card);
+    if (payload.action == "add")
+      state.cardsInHands.push(payload.card);
   },
 
   UPDATE_BLOCK_CARDS_HANDS: (state, payload) => {

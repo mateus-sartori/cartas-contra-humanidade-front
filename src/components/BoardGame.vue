@@ -41,6 +41,17 @@
             >
               Aguardando carta do patrão...
             </div>
+            <div class="col row justify-end" v-if="!isBossCurrentPlayer">
+              <div
+                @click="buyCard(whiteCards[0])"
+                v-show="whiteCards.length >= 1 && !isBossCurrentPlayer"
+              >
+                <card
+                  :canHover="!isBossCurrentPlayer"
+                  :text="`Restantes ${whiteCards.length}`"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -54,18 +65,6 @@
         >
           <div class="q-my-md text-caption">
             Esperando jogadores enviarem as cartas...
-          </div>
-        </div>
-
-        <div class="row col justify-end" v-if="!isBossCurrentPlayer">
-          <div
-            @click="buyCard(whiteCards[0])"
-            v-show="whiteCards.length >= 1 && !isBossCurrentPlayer"
-          >
-            <card
-              :canHover="!isBossCurrentPlayer"
-              :text="`Restantes ${whiteCards.length}`"
-            />
           </div>
         </div>
       </div>
@@ -109,12 +108,6 @@ export default {
     CardsInHands,
   },
 
-  props: {
-    players: {
-      type: Array,
-    },
-  },
-
   data() {
     return {
       showWinnerPlayer: false,
@@ -149,6 +142,9 @@ export default {
             break;
           case "reveal_card_in_table":
             this.updateCardsInTable(response.data);
+            break;
+          case "buy_white_card":
+            this.shiftCardsToBuy(response.data);
             break;
           case "shuffle_cards_in_table":
             this.updateCardsInTable(response.data);
@@ -243,6 +239,13 @@ export default {
         return card.revealed;
       });
     },
+
+    players() {
+      if (this.room) {
+        return this.room["players"];
+      }
+      return null;
+    },
   },
 
   created() {
@@ -300,6 +303,8 @@ export default {
       "removeSelectedCardFromBlackCards",
       "updateCurrentBossIndex",
       "updateBlockSelectWinner",
+      "updateCardsInHands",
+      "shiftCardsToBuy",
     ]),
 
     loadCardsInHands() {
@@ -326,7 +331,7 @@ export default {
         );
 
         var data = {
-          players: this.room["players"],
+          players: this.players,
           currentPlayer: this.currentPlayer,
         };
 
@@ -369,6 +374,24 @@ export default {
           data
         );
       }
+    },
+
+    buyCard(card) {
+      if (this.cardsInHands.length >= 5) return;
+
+      this.broadcastTo(
+        "buy_white_card",
+        this.startGameChannel,
+        this.room.id,
+        card
+      );
+
+      var data = {
+        card: card,
+        action: "add",
+      };
+
+      this.updateCardsInHands(data);
     },
 
     selectWinnerWhiteCard(card) {

@@ -30,7 +30,7 @@
     <div class="container">
       <score />
       <div v-if="isGameStared">
-        <board-game :current-player="currentPlayer" :players="players" />
+        <board-game :current-player="currentPlayer" />
       </div>
     </div>
   </div>
